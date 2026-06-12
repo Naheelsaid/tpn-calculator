@@ -310,6 +310,38 @@ st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  LIPID EMULSION 20% — separate infusion, excluded from TPN volume & osmolarity
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown("### 🫧 Lipid Emulsion 20% *(Separate Infusion)*")
+st.markdown('<div class="info-box">Lipid 20% is infused separately — <b>not included</b> in TPN total volume or osmolarity calculation.<br><b>Per litre:</b> 200 g fat · 2000 kcal · Osmolarity ≈ 350 mOsm/L (isotonic, peripheral safe)</div>', unsafe_allow_html=True)
+
+lp1, lp2, lp3, lp4 = st.columns(4)
+lipid_gkg = lp1.number_input("Dose (g/kg/day)", min_value=0.0, max_value=5.0, value=0.0, step=0.5)
+if lipid_gkg > 0:
+    lipid_grams = weight * lipid_gkg
+else:
+    lipid_grams = lp2.number_input("Lipid (grams)", min_value=0.0, max_value=500.0, value=0.0, step=5.0)
+
+lipid_vol   = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0   # 20% = 200 g/L
+lipid_kcal  = lipid_grams * 10                                           # 20% = 10 kcal/g
+lipid_rate  = lipid_vol / duration if lipid_grams > 0 and duration > 0 else 0.0
+
+lp3.metric("→ Volume (mL)", f"{lipid_vol:.1f}" if lipid_grams > 0 else "—")
+lp4.metric("→ Rate (mL/hr)", f"{lipid_rate:.1f}" if lipid_grams > 0 else "—")
+
+if lipid_grams > 0:
+    st.markdown(
+        f'<span class="result-pill">Fat: <b>{lipid_grams:.1f} g</b></span>'
+        f'<span class="result-pill">/kg: <b>{lipid_grams/weight:.2f} g/kg</b></span>'
+        f'<span class="result-pill">Energy: <b>{lipid_kcal:.0f} kcal</b></span>'
+        f'<span class="result-pill">Osmolarity: <b>~350 mOsm/L (isotonic)</b></span>',
+        unsafe_allow_html=True
+    )
+
+st.markdown("---")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  WFI
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 💧 Water for Injection / Diluent")
@@ -326,7 +358,8 @@ st.markdown("---")
 #  CALCULATIONS
 # ══════════════════════════════════════════════════════════════════════════════
 total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + extra_nacl3 + trace_vol + mv_vol + wfi_vol
-total_kcal = dex_kcal + aa_kcal
+total_kcal = dex_kcal + aa_kcal                      # TPN kcal only (no lipid)
+total_kcal_with_lipid = total_kcal + lipid_kcal      # grand total including separate lipid
 
 # Electrolyte totals
 tot_Na  = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
@@ -389,11 +422,19 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Stat boxes
 actual_rate = total_vol / duration if duration > 0 and total_vol > 0 else 0
 sc1, sc2, sc3, sc4, sc5 = st.columns(5)
-sc1.metric("Total Volume (mL)", f"{total_vol:.0f}")
-sc2.metric("Actual Rate (mL/hr)", f"{actual_rate:.1f}" if actual_rate > 0 else "—")
-sc3.metric("Total kcal", f"{total_kcal:.0f}")
+sc1.metric("TPN Volume (mL)", f"{total_vol:.0f}")
+sc2.metric("TPN Rate (mL/hr)", f"{actual_rate:.1f}" if actual_rate > 0 else "—")
+sc3.metric("TPN kcal", f"{total_kcal:.0f}")
 sc4.metric("Protein (g/kg)", f"{aa_grams/weight:.2f}" if aa_grams > 0 and weight > 0 else "—")
 sc5.metric("GIR (mg/kg/min)", f"{dex_gir:.2f}" if dex_grams > 0 else "—")
+
+if lipid_grams > 0:
+    sl1, sl2, sl3, sl4, sl5 = st.columns(5)
+    sl1.metric("Lipid Vol (mL) ⚡separate", f"{lipid_vol:.0f}")
+    sl2.metric("Lipid Rate (mL/hr)", f"{lipid_rate:.1f}")
+    sl3.metric("Lipid kcal", f"{lipid_kcal:.0f}")
+    sl4.metric("Fat (g/kg)", f"{lipid_grams/weight:.2f}")
+    sl5.metric("Total kcal (TPN + Lipid)", f"{total_kcal_with_lipid:.0f}")
 
 sc5, sc6, sc7, sc8, sc9, sc10 = st.columns(6)
 sc5.metric("Na⁺ total (mmol)", f"{tot_Na:.1f}")
@@ -465,8 +506,13 @@ if wfi_vol > 0:
     recipe.append({"Component": "Water for Injection", "Volume (mL)": round(wfi_vol, 1), "Details": "Diluent — 0 mOsm"})
 
 if recipe:
-    recipe.append({"Component": "── TOTAL ──", "Volume (mL)": round(total_vol, 1),
+    recipe.append({"Component": "── TPN TOTAL ──", "Volume (mL)": round(total_vol, 1),
                    "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}"})
+    if lipid_grams > 0:
+        recipe.append({"Component": "⚡ Lipid 20% (separate infusion)", "Volume (mL)": round(lipid_vol, 1),
+                       "Details": f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · Rate: {lipid_rate:.1f} mL/hr · NOT included in TPN osmolarity"})
+        recipe.append({"Component": "── GRAND TOTAL kcal ──", "Volume (mL)": "—",
+                       "Details": f"TPN {total_kcal:.0f} kcal + Lipid {lipid_kcal:.0f} kcal = {total_kcal_with_lipid:.0f} kcal"})
     df_recipe = pd.DataFrame(recipe)
     st.dataframe(df_recipe, use_container_width=True, hide_index=True)
 
@@ -491,6 +537,8 @@ if k_target > 0 and k_target < aa_K:
     warnings.append(f"⚠️ K⁺ target ({k_target} mmol) is less than what AA solution provides ({aa_K:.1f} mmol).")
 if tot_K > weight * 3:
     warnings.append("⚠️ Total K⁺ may exceed safe limit (~3 mmol/kg/day max in TPN).")
+if lipid_grams > 0 and lipid_grams / weight > 2.5:
+    warnings.append(f"⚠️ Lipid dose ({lipid_grams/weight:.2f} g/kg/day) exceeds recommended max (2.5 g/kg/day).")
 if dex_grams > 0 and dex_gir > 7:
     warnings.append("⚠️ GIR >7 mg/kg/min — risk of hyperglycemia. Consider reducing dextrose.")
 if total_vol > goal_vol * 1.05:
