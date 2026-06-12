@@ -211,8 +211,8 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
     ks2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_K:.1f} mmol</b></div>', unsafe_allow_html=True)
     k_needed = max(0.0, k_target - aa_K) if k_target > 0 else 0.0
     ks3.metric("Still needed after AA (mmol)", f"{k_needed:.1f}" if k_target > 0 else "—")
-    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol K⁺/mL)", "KCl 0.5:1 (0.5 mmol K⁺/mL)"])  # K Phosphate chosen in PO₄ section
-    k_conc = 1.0 if "1:1" in k_src else 0.5   # mmol K⁺ per mL
+    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol K⁺/mL)", "KCl 2:1 (2 mmol K⁺/mL)"])  # K Phosphate chosen in PO₄ section
+    k_conc = 1.0 if "1:1" in k_src else 2.0   # mmol K⁺ per mL
 
     # Credit K delivered by K Phosphate (from PO₄ section)
     k_kcl_needed = max(0.0, k_needed - k_from_phos) if k_target > 0 else 0.0
@@ -444,7 +444,7 @@ if na_vol > 0:
     recipe.append({"Component": "NaCl 3%", "Volume (mL)": round(na_vol, 1),
                    "Details": f"Na⁺ {na_nacl_needed:.1f} mmol + Cl⁻ {na_nacl_needed:.1f} mmol"})
 if k_vol > 0:
-    k_label = "KCl 1:1" if "1:1" in k_src else "KCl 0.5:1"
+    k_label = "KCl 1:1" if "1:1" in k_src else "KCl 2:1"
     recipe.append({"Component": k_label, "Volume (mL)": round(k_vol, 1),
                    "Details": f"K⁺ {k_kcl_needed:.1f} mmol + Cl⁻ {k_cl_contribution:.1f} mmol"})
 if mg_vol > 0:
