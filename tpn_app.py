@@ -211,7 +211,8 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
     ks2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_K:.1f} mmol</b></div>', unsafe_allow_html=True)
     k_needed = max(0.0, k_target - aa_K) if k_target > 0 else 0.0
     ks3.metric("Still needed after AA (mmol)", f"{k_needed:.1f}" if k_target > 0 else "—")
-    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol/mL)"])  # KCl only; K Phosphate is chosen in PO₄ section
+    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol K⁺/mL)", "KCl 0.5:1 (0.5 mmol K⁺/mL)"])  # K Phosphate chosen in PO₄ section
+    k_conc = 1.0 if "1:1" in k_src else 0.5   # mmol K⁺ per mL
 
     # Credit K delivered by K Phosphate (from PO₄ section)
     k_kcl_needed = max(0.0, k_needed - k_from_phos) if k_target > 0 else 0.0
@@ -229,8 +230,16 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
             unsafe_allow_html=True
         )
 
-    k_vol = k_kcl_needed  # volume of KCl to add (mL); = 0 if k_target not set
+    # Volume = mmol K needed ÷ concentration; Cl⁻ = volume × 1 mmol/mL (always 1:1 with volume)
+    k_vol     = k_kcl_needed / k_conc if k_target > 0 else 0.0
+    k_cl_contribution = k_vol * 1.0   # 1 mmol Cl⁻ per mL regardless of K concentration
     st.metric("→ Volume of KCl to add (mL)", f"{k_vol:.1f}" if k_target > 0 else "—")
+    if k_target > 0:
+        st.markdown(
+            f'<span class="result-pill">K⁺: <b>{k_kcl_needed:.1f} mmol</b></span>'
+            f'<span class="result-pill">Cl⁻ from KCl: <b>{k_cl_contribution:.1f} mmol</b></span>',
+            unsafe_allow_html=True
+        )
 
 
 # ── MAGNESIUM ─────────────────────────────────────────────────────────────────
@@ -330,7 +339,7 @@ tot_Cl  = aa_Cl
 if na_target > 0:
     tot_Cl += na_nacl_needed          # NaCl 3% Cl⁻
 if k_target > 0 and "KCl" in k_src:
-    tot_Cl += k_kcl_needed            # KCl 1:1 Cl⁻
+    tot_Cl += k_cl_contribution       # KCl Cl⁻ (= k_vol × 1 mmol/mL)
 tot_Cl += extra_nacl3 * 0.51335
 
 # Acetate — from AA solution only (no added acetate sources)
@@ -435,9 +444,9 @@ if na_vol > 0:
     recipe.append({"Component": "NaCl 3%", "Volume (mL)": round(na_vol, 1),
                    "Details": f"Na⁺ {na_nacl_needed:.1f} mmol + Cl⁻ {na_nacl_needed:.1f} mmol"})
 if k_vol > 0:
-    k_label = "KCl 1:1"
+    k_label = "KCl 1:1" if "1:1" in k_src else "KCl 0.5:1"
     recipe.append({"Component": k_label, "Volume (mL)": round(k_vol, 1),
-                   "Details": f"K⁺ {k_kcl_needed:.1f} mmol + Cl⁻ {k_kcl_needed:.1f} mmol"})
+                   "Details": f"K⁺ {k_kcl_needed:.1f} mmol + Cl⁻ {k_cl_contribution:.1f} mmol"})
 if mg_vol > 0:
     recipe.append({"Component": "MgSO₄ 8mEq/10mL", "Volume (mL)": round(mg_vol, 1),
                    "Details": f"{mg_vials:.1f} vials × 10 mL | Mg²⁺ {mg_needed:.1f} mmol ({mg_needed*2:.1f} mEq)"})
