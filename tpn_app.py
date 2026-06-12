@@ -330,8 +330,11 @@ tot_Cl  = aa_Cl
 if na_target > 0:
     tot_Cl += na_nacl_needed          # NaCl 3% Cl⁻
 if k_target > 0 and "KCl" in k_src:
-    tot_Cl += k_kcl_needed            # KCl Cl⁻
+    tot_Cl += k_kcl_needed            # KCl 1:1 Cl⁻
 tot_Cl += extra_nacl3 * 0.51335
+
+# Acetate — from AA solution only (no added acetate sources)
+tot_Ace = aa_Ace
 
 # Extra NaCl Na
 tot_Na += extra_nacl3 * 0.51335
@@ -383,11 +386,13 @@ sc3.metric("Total kcal", f"{total_kcal:.0f}")
 sc4.metric("Protein (g/kg)", f"{aa_grams/weight:.2f}" if aa_grams > 0 and weight > 0 else "—")
 sc5.metric("GIR (mg/kg/min)", f"{dex_gir:.2f}" if dex_grams > 0 else "—")
 
-sc5, sc6, sc7, sc8 = st.columns(4)
+sc5, sc6, sc7, sc8, sc9, sc10 = st.columns(6)
 sc5.metric("Na⁺ total (mmol)", f"{tot_Na:.1f}")
 sc6.metric("K⁺ total (mmol)", f"{tot_K:.1f}")
 sc7.metric("Mg²⁺ total (mmol)", f"{tot_Mg:.1f}")
 sc8.metric("PO₄³⁻ total (mmol)", f"{tot_Phos:.1f}")
+sc9.metric("Cl⁻ total (mmol)", f"{tot_Cl:.1f}")
+sc10.metric("Acetate total (mmol)", f"{tot_Ace:.1f}")
 
 st.markdown("---")
 
