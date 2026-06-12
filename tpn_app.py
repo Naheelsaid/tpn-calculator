@@ -81,10 +81,12 @@ st.markdown("---")
 #  PATIENT PARAMETERS
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 👤 Patient Parameters")
-pc1, pc2, pc3 = st.columns(3)
+pc1, pc2, pc3, pc4 = st.columns(4)
 weight   = pc1.number_input("Weight (kg)", min_value=0.5, max_value=250.0, value=70.0, step=0.5)
 goal_vol = pc2.number_input("Total Fluid Goal (mL/day)", min_value=100, max_value=10000, value=2000, step=50)
 duration = pc3.number_input("Duration (hours)", min_value=1, max_value=24, value=24, step=1)
+planned_rate = goal_vol / duration
+pc4.metric("Infusion Rate (mL/hr)", f"{planned_rate:.1f}")
 
 st.markdown("---")
 
@@ -373,11 +375,13 @@ st.markdown(f"""
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Stat boxes
-sc1, sc2, sc3, sc4 = st.columns(4)
+actual_rate = total_vol / duration if duration > 0 and total_vol > 0 else 0
+sc1, sc2, sc3, sc4, sc5 = st.columns(5)
 sc1.metric("Total Volume (mL)", f"{total_vol:.0f}")
-sc2.metric("Total kcal", f"{total_kcal:.0f}")
-sc3.metric("Protein (g/kg)", f"{aa_grams/weight:.2f}" if aa_grams > 0 and weight > 0 else "—")
-sc4.metric("GIR (mg/kg/min)", f"{dex_gir:.2f}" if dex_grams > 0 else "—")
+sc2.metric("Actual Rate (mL/hr)", f"{actual_rate:.1f}" if actual_rate > 0 else "—")
+sc3.metric("Total kcal", f"{total_kcal:.0f}")
+sc4.metric("Protein (g/kg)", f"{aa_grams/weight:.2f}" if aa_grams > 0 and weight > 0 else "—")
+sc5.metric("GIR (mg/kg/min)", f"{dex_gir:.2f}" if dex_grams > 0 else "—")
 
 sc5, sc6, sc7, sc8 = st.columns(4)
 sc5.metric("Na⁺ total (mmol)", f"{tot_Na:.1f}")
