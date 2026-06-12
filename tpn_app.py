@@ -322,18 +322,25 @@ if lipid_gkg > 0:
 else:
     lipid_grams = lp2.number_input("Lipid (grams)", min_value=0.0, max_value=500.0, value=0.0, step=5.0)
 
-lipid_vol   = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0   # 20% = 200 g/L
-lipid_kcal  = lipid_grams * 10                                           # 20% = 10 kcal/g
-lipid_rate  = lipid_vol / duration if lipid_grams > 0 and duration > 0 else 0.0
+lipid_vit_vol    = lp3.number_input("Lipid Vitamin Vol (mL)", min_value=0.0, max_value=50.0, value=0.0, step=1.0)
+lipid_infuse_hrs = lp4.number_input("Infuse Over (hours)", min_value=1, max_value=24, value=12, step=1)
 
-lp3.metric("→ Volume (mL)", f"{lipid_vol:.1f}" if lipid_grams > 0 else "—")
-lp4.metric("→ Rate (mL/hr)", f"{lipid_rate:.1f}" if lipid_grams > 0 else "—")
+lipid_base_vol = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0   # 20% = 200 g/L
+lipid_vol      = lipid_base_vol + lipid_vit_vol                              # total bag volume
+lipid_kcal     = lipid_grams * 10                                            # 10 kcal/g fat
+lipid_rate     = lipid_vol / lipid_infuse_hrs if lipid_vol > 0 else 0.0
+
+lv1, lv2, lv3 = st.columns(3)
+lv1.metric("Lipid Base Vol (mL)", f"{lipid_base_vol:.1f}" if lipid_grams > 0 else "—")
+lv2.metric("Total Bag Vol (mL)", f"{lipid_vol:.1f}" if lipid_vol > 0 else "—")
+lv3.metric("→ Rate (mL/hr)", f"{lipid_rate:.1f}" if lipid_vol > 0 else "—")
 
 if lipid_grams > 0:
     st.markdown(
         f'<span class="result-pill">Fat: <b>{lipid_grams:.1f} g</b></span>'
         f'<span class="result-pill">/kg: <b>{lipid_grams/weight:.2f} g/kg</b></span>'
         f'<span class="result-pill">Energy: <b>{lipid_kcal:.0f} kcal</b></span>'
+        f'<span class="result-pill">Over: <b>{lipid_infuse_hrs} hrs</b></span>'
         f'<span class="result-pill">Osmolarity: <b>~350 mOsm/L (isotonic)</b></span>',
         unsafe_allow_html=True
     )
@@ -430,10 +437,10 @@ sc5.metric("GIR (mg/kg/min)", f"{dex_gir:.2f}" if dex_grams > 0 else "—")
 
 if lipid_grams > 0:
     sl1, sl2, sl3, sl4, sl5 = st.columns(5)
-    sl1.metric("Lipid Vol (mL) ⚡separate", f"{lipid_vol:.0f}")
+    sl1.metric("Lipid Total Vol (mL)", f"{lipid_vol:.0f}")
     sl2.metric("Lipid Rate (mL/hr)", f"{lipid_rate:.1f}")
-    sl3.metric("Lipid kcal", f"{lipid_kcal:.0f}")
-    sl4.metric("Fat (g/kg)", f"{lipid_grams/weight:.2f}")
+    sl3.metric("Infuse Over (hrs)", f"{lipid_infuse_hrs}")
+    sl4.metric("Lipid kcal", f"{lipid_kcal:.0f}")
     sl5.metric("Total kcal (TPN + Lipid)", f"{total_kcal_with_lipid:.0f}")
 
 sc5, sc6, sc7, sc8, sc9, sc10 = st.columns(6)
@@ -509,8 +516,12 @@ if recipe:
     recipe.append({"Component": "── TPN TOTAL ──", "Volume (mL)": round(total_vol, 1),
                    "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}"})
     if lipid_grams > 0:
+        lipid_detail = f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · Rate: {lipid_rate:.1f} mL/hr over {lipid_infuse_hrs}h"
+        if lipid_vit_vol > 0:
+            lipid_detail += f" · Vit additive: {lipid_vit_vol:.0f} mL"
+        lipid_detail += " · NOT included in TPN osmolarity"
         recipe.append({"Component": "⚡ Lipid 20% (separate infusion)", "Volume (mL)": round(lipid_vol, 1),
-                       "Details": f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · Rate: {lipid_rate:.1f} mL/hr · NOT included in TPN osmolarity"})
+                       "Details": lipid_detail})
         recipe.append({"Component": "── GRAND TOTAL kcal ──", "Volume (mL)": "—",
                        "Details": f"TPN {total_kcal:.0f} kcal + Lipid {lipid_kcal:.0f} kcal = {total_kcal_with_lipid:.0f} kcal"})
     df_recipe = pd.DataFrame(recipe)
