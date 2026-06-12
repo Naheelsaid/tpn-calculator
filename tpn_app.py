@@ -163,31 +163,44 @@ st.markdown("---")
 st.markdown("### ⚡ Electrolytes — Target Dose Entry")
 st.markdown('<div class="info-box">Enter your <b>total desired dose</b>. The calculator subtracts what the Amino Acid solution already provides (shown in 🟡 orange).</div>', unsafe_allow_html=True)
 
+# ── PRE-READ: Phosphate source — needed before Na AND K expanders ─────────────
+# Session state carries last-render values so credits are available immediately.
+_phos_target_pre = st.session_state.get("phos_target_pre", 0.0)
+_phos_src_pre    = st.session_state.get("phos_src_pre", "K Phosphate B.Braun (0.6 mmol/mL PO₄)")
+_phos_needed_pre = max(0.0, _phos_target_pre - aa_Phos) if _phos_target_pre > 0 else 0.0
+_phos_vol_pre    = _phos_needed_pre / 0.6 if _phos_target_pre > 0 else 0.0
+# K credit from K Phosphate (1 mmol K⁺ per mL)
+k_from_phos  = _phos_vol_pre if (_phos_target_pre > 0 and "K Phosphate" in _phos_src_pre) else 0.0
+# Na credit from Na Phosphate (1 mmol Na⁺ per mL)
+na_from_phos = _phos_vol_pre if (_phos_target_pre > 0 and "Na Phosphate" in _phos_src_pre) else 0.0
+
 # ── SODIUM ────────────────────────────────────────────────────────────────────
 with st.expander("🧂 Sodium — Na⁺", expanded=True):
     ns1, ns2, ns3, ns4 = st.columns(4)
     na_target = ns1.number_input("Target Na⁺ (mmol/day)", min_value=0.0, value=0.0, step=5.0)
     ns2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_Na:.1f} mmol</b></div>', unsafe_allow_html=True)
     na_needed = max(0.0, na_target - aa_Na) if na_target > 0 else 0.0
-    ns3.metric("Still needed (mmol)", f"{na_needed:.1f}" if na_target > 0 else "—")
-    na_src = ns4.selectbox("Source", ["NaCl 3% (0.513 mmol/mL)", "Na Phosphate Braun (1 mmol/mL)"])
+    ns3.metric("Still needed after AA (mmol)", f"{na_needed:.1f}" if na_target > 0 else "—")
+    na_src = ns4.selectbox("Source", ["NaCl 3% (0.513 mmol/mL)"])  # NaCl only; Na Phosphate chosen in PO₄ section
 
-    na_vol = 0.0
-    if na_target > 0:
-        if "NaCl" in na_src:
-            na_vol = na_needed / 0.51335
-        else:
-            na_vol = na_needed / 1.0
-    st.metric("→ Volume of Na source to add (mL)", f"{na_vol:.1f}" if na_target > 0 else "—")
+    # Credit Na delivered by Na Phosphate (from PO₄ section)
+    na_nacl_needed = max(0.0, na_needed - na_from_phos) if na_target > 0 else 0.0
 
-# ── PRE-READ: Phosphate source (needed early to credit K⁺ from K Phosphate) ──
-# We read phos_target and phos_src here (outside expanders) so that k_from_phos
-# is known when we render the Potassium expander below.
-_phos_target_pre = st.session_state.get("phos_target_pre", 0.0)
-_phos_src_pre    = st.session_state.get("phos_src_pre", "K Phosphate B.Braun (0.6 mmol/mL PO₄)")
-_phos_needed_pre = max(0.0, _phos_target_pre - aa_Phos) if _phos_target_pre > 0 else 0.0
-_phos_vol_pre    = _phos_needed_pre / 0.6 if _phos_target_pre > 0 else 0.0
-k_from_phos      = _phos_vol_pre if (_phos_target_pre > 0 and "K Phosphate" in _phos_src_pre) else 0.0
+    if na_from_phos > 0 and na_target > 0:
+        st.markdown(
+            f'<div class="info-box">ℹ️ <b>Na Phosphate (PO₄ section) co-delivers {na_from_phos:.1f} mmol Na⁺</b> '
+            f'→ NaCl 3% still needed: <b>{na_nacl_needed:.1f} mmol</b></div>',
+            unsafe_allow_html=True
+        )
+    elif na_from_phos > 0 and na_target == 0:
+        st.markdown(
+            f'<div class="info-box">ℹ️ Na Phosphate (PO₄ section) will deliver <b>{na_from_phos:.1f} mmol Na⁺</b>. '
+            f'Set a Na⁺ target above to see the full breakdown.</div>',
+            unsafe_allow_html=True
+        )
+
+    na_vol = (na_nacl_needed / 0.51335) if na_target > 0 else 0.0
+    st.metric("→ Volume of NaCl 3% to add (mL)", f"{na_vol:.1f}" if na_target > 0 else "—")
 
 # ── POTASSIUM ─────────────────────────────────────────────────────────────────
 with st.expander("🟨 Potassium — K⁺", expanded=True):
@@ -233,7 +246,7 @@ with st.expander("🟩 Magnesium — Mg²⁺", expanded=True):
 
 # ── PHOSPHATE ─────────────────────────────────────────────────────────────────
 with st.expander("🟦 Phosphate — PO₄³⁻", expanded=True):
-    st.markdown('<div class="info-box">⚠️ If you choose <b>K Phosphate</b>, it also delivers <b>1 mmol K⁺ per mL</b>. That K⁺ is automatically credited in the Potassium section above, reducing the KCl dose needed.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="info-box">⚠️ <b>K Phosphate</b> also delivers <b>1 mmol K⁺ per mL</b> — credited in the K⁺ section, reducing KCl needed.<br>⚠️ <b>Na Phosphate</b> also delivers <b>1 mmol Na⁺ per mL</b> — credited in the Na⁺ section, reducing NaCl 3% needed.</div>', unsafe_allow_html=True)
     ps1, ps2, ps3, ps4 = st.columns(4)
     phos_target = ps1.number_input("Target PO₄³⁻ (mmol/day)", min_value=0.0, value=0.0, step=2.0,
                                     key="phos_target_pre")
@@ -246,13 +259,19 @@ with st.expander("🟦 Phosphate — PO₄³⁻", expanded=True):
     phos_vol = phos_needed / 0.6 if phos_target > 0 else 0.0
     st.metric("→ Volume of PO₄ source to add (mL)", f"{phos_vol:.1f}" if phos_target > 0 else "—")
 
-    # Recalculate k_from_phos with live values (this is the authoritative value for totals below)
-    k_from_phos = phos_vol if (phos_target > 0 and "K Phosphate" in phos_src) else 0.0
+    # Recalculate with live values (authoritative for totals below)
+    k_from_phos  = phos_vol if (phos_target > 0 and "K Phosphate" in phos_src) else 0.0
+    na_from_phos = phos_vol if (phos_target > 0 and "Na Phosphate" in phos_src) else 0.0
     if k_from_phos > 0:
         st.markdown(
             f'<div class="info-box">✅ K Phosphate delivers <b>{k_from_phos:.1f} mmol K⁺</b> '
-            f'(= {phos_vol:.1f} mL × 1 mmol/mL). This is credited in the K⁺ section — '
-            f'KCl volume is reduced accordingly.</div>',
+            f'(= {phos_vol:.1f} mL × 1 mmol/mL). Credited in the K⁺ section — KCl reduced accordingly.</div>',
+            unsafe_allow_html=True
+        )
+    if na_from_phos > 0:
+        st.markdown(
+            f'<div class="info-box">✅ Na Phosphate delivers <b>{na_from_phos:.1f} mmol Na⁺</b> '
+            f'(= {phos_vol:.1f} mL × 1 mmol/mL). Credited in the Na⁺ section — NaCl 3% reduced accordingly.</div>',
             unsafe_allow_html=True
         )
 
@@ -299,30 +318,21 @@ total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + extra_nacl3
 total_kcal = dex_kcal + aa_kcal
 
 # Electrolyte totals
-tot_Na  = aa_Na + (na_needed if na_target > 0 else 0)
-if na_target > 0 and "Na Phosphate" in na_src:
-    tot_Na += 0  # already counted
-    tot_Phos_from_na = na_needed * 0.6
-else:
-    tot_Phos_from_na = 0
+tot_Na  = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
+tot_Phos_from_na = na_from_phos * 0.6  # Na Phosphate: 0.6 mmol PO₄ per mmol Na (= per mL)
 
 tot_K   = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg  = aa_Mg + (mg_needed if mg_target > 0 else 0)
-tot_Phos = aa_Phos + (phos_needed * 0.6 / 0.6 if phos_target > 0 else 0) + tot_Phos_from_na
+tot_Phos = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
 tot_Cl  = aa_Cl
-if na_target > 0 and "NaCl" in na_src:
-    tot_Cl += na_needed
+if na_target > 0:
+    tot_Cl += na_nacl_needed          # NaCl 3% Cl⁻
 if k_target > 0 and "KCl" in k_src:
-    tot_Cl += k_kcl_needed
+    tot_Cl += k_kcl_needed            # KCl Cl⁻
 tot_Cl += extra_nacl3 * 0.51335
 
 # Extra NaCl Na
 tot_Na += extra_nacl3 * 0.51335
-
-# K phosphate (from phos section) gives extra K — already counted in k_from_phos
-# Na phosphate (from Na section) gives extra Na — already counted in na_needed
-if na_target > 0 and "Na Phosphate" in na_src:
-    tot_Na += 0  # already in na_needed
 
 # OSMOLARITY — correct TPN formula
 # Osm = (g dextrose/L × 5) + (g AA/L × 10) + (mEq cations/L × 2)
@@ -413,9 +423,8 @@ if aa_vol > 0:
     recipe.append({"Component": "Amino Acids 10%", "Volume (mL)": round(aa_vol, 1),
                    "Details": f"{aa_grams:.1f} g protein ({aa_grams/weight:.2f} g/kg) · {aa_kcal:.0f} kcal | Na {aa_Na:.1f} · K {aa_K:.1f} · Mg {aa_Mg:.1f} · PO₄ {aa_Phos:.1f} mmol"})
 if na_vol > 0:
-    src_label = "NaCl 3%" if "NaCl" in na_src else "Na Phosphate Braun"
-    recipe.append({"Component": src_label, "Volume (mL)": round(na_vol, 1),
-                   "Details": f"Na⁺ {na_needed:.1f} mmol" + (f" + PO₄³⁻ {na_needed*0.6:.1f} mmol" if "Phosphate" in na_src else f" + Cl⁻ {na_needed:.1f} mmol")})
+    recipe.append({"Component": "NaCl 3%", "Volume (mL)": round(na_vol, 1),
+                   "Details": f"Na⁺ {na_nacl_needed:.1f} mmol + Cl⁻ {na_nacl_needed:.1f} mmol"})
 if k_vol > 0:
     k_label = "KCl 1:1"
     recipe.append({"Component": k_label, "Volume (mL)": round(k_vol, 1),
