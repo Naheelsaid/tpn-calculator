@@ -327,7 +327,7 @@ lipid_infuse_hrs = lp4.number_input("Infuse Over (hours)", min_value=1, max_valu
 
 lipid_base_vol = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0   # 20% = 200 g/L
 lipid_vol      = lipid_base_vol + lipid_vit_vol                              # total bag volume
-lipid_kcal     = lipid_grams * 10                                            # 10 kcal/g fat
+lipid_kcal     = lipid_grams * 9                                            # 9 kcal/g fat
 lipid_rate     = lipid_vol / lipid_infuse_hrs if lipid_vol > 0 else 0.0
 
 lv1, lv2, lv3 = st.columns(3)
