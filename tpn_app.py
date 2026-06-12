@@ -232,7 +232,7 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
 
     # Volume = mmol K needed ÷ concentration; Cl⁻ = volume × 1 mmol/mL (always 1:1 with volume)
     k_vol     = k_kcl_needed / k_conc if k_target > 0 else 0.0
-    k_cl_contribution = k_vol * 1.0   # 1 mmol Cl⁻ per mL regardless of K concentration
+    k_cl_contribution = k_kcl_needed   # Cl⁻ mmol always equals K⁺ mmol (1:1 molar ratio)
     st.metric("→ Volume of KCl to add (mL)", f"{k_vol:.1f}" if k_target > 0 else "—")
     if k_target > 0:
         st.markdown(
