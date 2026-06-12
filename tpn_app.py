@@ -76,17 +76,56 @@ st.markdown("# ⚗️ TPN Compounding Calculator")
 st.markdown("**Central / Peripheral Line · Osmolarity · Electrolytes · Volumes**")
 st.markdown("---")
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  PATIENT TYPE
+# ══════════════════════════════════════════════════════════════════════════════
+pt_col1, pt_col2 = st.columns([2, 5])
+patient_type = pt_col1.radio("👶 Patient Type", ["Adult", "Pediatric"], horizontal=True)
+is_pediatric = patient_type == "Pediatric"
+
+if is_pediatric:
+    pt_col2.markdown("""
+<div class="info-box">
+<b>Pediatric reference ranges:</b>
+Protein: 1.5–3.0 g/kg/day &nbsp;|&nbsp; Dextrose GIR: 5–12 mg/kg/min &nbsp;|&nbsp;
+Lipid: 1–3 g/kg/day &nbsp;|&nbsp; Fluid: 100–150 mL/kg/day &nbsp;|&nbsp;
+Na⁺: 2–4 mmol/kg/day &nbsp;|&nbsp; K⁺: 2–3 mmol/kg/day &nbsp;|&nbsp;
+Ca²⁺/Mg²⁺/PO₄: higher per kg than adults
+</div>""", unsafe_allow_html=True)
+else:
+    pt_col2.markdown("""
+<div class="info-box">
+<b>Adult reference ranges:</b>
+Protein: 0.8–2.0 g/kg/day &nbsp;|&nbsp; Dextrose GIR: 2–5 mg/kg/min &nbsp;|&nbsp;
+Lipid: 0.5–2.5 g/kg/day &nbsp;|&nbsp; Fluid: 25–35 mL/kg/day &nbsp;|&nbsp;
+Na⁺: 1–2 mmol/kg/day &nbsp;|&nbsp; K⁺: 1–2 mmol/kg/day
+</div>""", unsafe_allow_html=True)
+
+st.markdown("---")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PATIENT PARAMETERS
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 👤 Patient Parameters")
 pc1, pc2, pc3, pc4 = st.columns(4)
-weight   = pc1.number_input("Weight (kg)", min_value=0.5, max_value=250.0, value=70.0, step=0.5)
-goal_vol = pc2.number_input("Total Fluid Goal (mL/day)", min_value=100, max_value=10000, value=2000, step=50)
+
+# Defaults differ by patient type
+_wt_default  = 10.0 if is_pediatric else 70.0
+_wt_max      = 100.0 if is_pediatric else 250.0
+_wt_step     = 0.1  if is_pediatric else 0.5
+_vol_default = 1000 if is_pediatric else 2000
+_vol_step    = 10   if is_pediatric else 50
+
+weight   = pc1.number_input("Weight (kg)", min_value=0.1, max_value=_wt_max, value=_wt_default, step=_wt_step)
+goal_vol = pc2.number_input("Total Fluid Goal (mL/day)", min_value=50, max_value=10000, value=_vol_default, step=_vol_step)
 duration = pc3.number_input("Duration (hours)", min_value=1, max_value=24, value=24, step=1)
 planned_rate = goal_vol / duration
 pc4.metric("Infusion Rate (mL/hr)", f"{planned_rate:.1f}")
+
+# Per-kg fluid dose
+fluid_per_kg = goal_vol / weight if weight > 0 else 0
+st.markdown(f'<span class="result-pill">Fluid: <b>{fluid_per_kg:.1f} mL/kg/day</b></span>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -516,12 +555,16 @@ if recipe:
     recipe.append({"Component": "── TPN TOTAL ──", "Volume (mL)": round(total_vol, 1),
                    "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}"})
     if lipid_grams > 0:
-        lipid_detail = f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · Rate: {lipid_rate:.1f} mL/hr over {lipid_infuse_hrs}h"
+        # Row 1: Lipid emulsion base volume
+        recipe.append({"Component": "⚡ Lipid Emulsion 20% (separate)", "Volume (mL)": round(lipid_base_vol, 1),
+                       "Details": f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · NOT included in TPN osmolarity"})
+        # Row 2: Lipid vitamin additive (only if entered)
         if lipid_vit_vol > 0:
-            lipid_detail += f" · Vit additive: {lipid_vit_vol:.0f} mL"
-        lipid_detail += " · NOT included in TPN osmolarity"
-        recipe.append({"Component": "⚡ Lipid 20% (separate infusion)", "Volume (mL)": round(lipid_vol, 1),
-                       "Details": lipid_detail})
+            recipe.append({"Component": "⚡ Lipid Vitamin Additive (separate)", "Volume (mL)": round(lipid_vit_vol, 1),
+                           "Details": f"Added to lipid bag → Total bag: {lipid_vol:.1f} mL · Rate: {lipid_rate:.1f} mL/hr over {lipid_infuse_hrs}h"})
+        else:
+            recipe.append({"Component": "⚡ Lipid — Infusion Info", "Volume (mL)": "—",
+                           "Details": f"Total bag: {lipid_vol:.1f} mL · Rate: {lipid_rate:.1f} mL/hr over {lipid_infuse_hrs}h"})
         recipe.append({"Component": "── GRAND TOTAL kcal ──", "Volume (mL)": "—",
                        "Details": f"TPN {total_kcal:.0f} kcal + Lipid {lipid_kcal:.0f} kcal = {total_kcal_with_lipid:.0f} kcal"})
     df_recipe = pd.DataFrame(recipe)
@@ -548,10 +591,17 @@ if k_target > 0 and k_target < aa_K:
     warnings.append(f"⚠️ K⁺ target ({k_target} mmol) is less than what AA solution provides ({aa_K:.1f} mmol).")
 if tot_K > weight * 3:
     warnings.append("⚠️ Total K⁺ may exceed safe limit (~3 mmol/kg/day max in TPN).")
-if lipid_grams > 0 and lipid_grams / weight > 2.5:
-    warnings.append(f"⚠️ Lipid dose ({lipid_grams/weight:.2f} g/kg/day) exceeds recommended max (2.5 g/kg/day).")
-if dex_grams > 0 and dex_gir > 7:
-    warnings.append("⚠️ GIR >7 mg/kg/min — risk of hyperglycemia. Consider reducing dextrose.")
+
+# GIR threshold: pediatric 12, adult 7
+gir_max = 12 if is_pediatric else 7
+if dex_grams > 0 and dex_gir > gir_max:
+    warnings.append(f"⚠️ GIR >{gir_max} mg/kg/min — risk of hyperglycemia. Consider reducing dextrose.")
+
+# Lipid max: pediatric 3, adult 2.5
+lipid_max = 3.0 if is_pediatric else 2.5
+if lipid_grams > 0 and lipid_grams / weight > lipid_max:
+    warnings.append(f"⚠️ Lipid dose ({lipid_grams/weight:.2f} g/kg/day) exceeds recommended max ({lipid_max} g/kg/day for {'pediatric' if is_pediatric else 'adult'}).")
+
 if total_vol > goal_vol * 1.05:
     warnings.append(f"⚠️ Total volume ({total_vol:.0f} mL) exceeds fluid goal ({goal_vol} mL).")
 
