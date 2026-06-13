@@ -2,6 +2,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="TPN Compounding Calculator",
+    page_icon="⚗️",
     layout="wide"
 )
 
@@ -77,9 +78,48 @@ st.markdown("""
 # ══════════════════════════════════════════════════════════════════════════════
 #  HEADER
 # ══════════════════════════════════════════════════════════════════════════════
-st.markdown("# ⚗️ TPN Compounding Calculator")
-st.markdown("**Central / Peripheral Line · Osmolarity · Electrolytes · Volumes**")
-st.markdown("---")
+st.markdown("""
+<svg width="100%" viewBox="0 0 780 140" role="img" style="display:block;margin-bottom:4px;">
+  <title>TPN Compounding Calculator</title>
+  <desc>Minimal IV drip bag with medical cross alongside calculator title</desc>
+  <style>
+    .hook    { fill: none; stroke: #7a92b0; stroke-width: 2.2; stroke-linecap: round; }
+    .string  { fill: none; stroke: #7a92b0; stroke-width: 1.5; stroke-linecap: round; }
+    .bag     { fill: #0d2035; stroke: #00c8a0; stroke-width: 1.8; }
+    .fluid   { fill: #0a3d2e; }
+    .waveline{ fill: none; stroke: #00c8a0; stroke-width: 1.2; opacity: 0.5; }
+    .cross   { fill: #00c8a0; }
+    .neck    { fill: #0d2035; stroke: #00c8a0; stroke-width: 1.5; }
+    .chamber { fill: #071626; stroke: #3a8dff; stroke-width: 1.4; }
+    .droptube{ fill: none; stroke: #3a8dff; stroke-width: 1.8; stroke-linecap: round; }
+    .droplet { fill: #3a8dff; }
+    .tubecoil{ fill: none; stroke: #7a92b0; stroke-width: 1.6; stroke-linecap: round; }
+  </style>
+
+  <g transform="translate(28, 8)">
+    <path d="M52 6 Q52 2 56 2 Q60 2 60 6" class="hook"/>
+    <line x1="56" y1="6"   x2="56" y2="16"  class="string"/>
+    <rect x="22" y="16" width="68" height="76" rx="10" class="bag"/>
+    <rect x="22" y="60" width="68" height="32" rx="0"  class="fluid" style="clip-path:inset(0 0 0 0 round 0 0 10px 10px)"/>
+    <path d="M22 60 Q30 55 38 60 Q46 65 54 60 Q62 55 70 60 Q78 65 86 60 Q90 58 90 60" class="waveline"/>
+    <rect x="44" y="25" width="24" height="24" rx="3" style="fill:#071626;stroke:#00c8a0;stroke-width:1;"/>
+    <rect x="51" y="29" width="10" height="16" rx="2" class="cross"/>
+    <rect x="46" y="34" width="20" height="6"  rx="2" class="cross"/>
+    <rect x="46" y="92"  width="20" height="6"  rx="3" class="neck"/>
+    <rect x="49" y="98"  width="14" height="4"  rx="2" class="neck"/>
+    <rect x="46" y="102" width="20" height="16" rx="4" class="chamber"/>
+    <ellipse cx="56" cy="113" rx="2.5" ry="3" class="droplet"/>
+    <path d="M56 118 Q56 124 56 130" class="droptube"/>
+    <path d="M56 130 Q64 130 64 138" class="tubecoil"/>
+  </g>
+
+  <line x1="128" y1="20" x2="128" y2="120" stroke="#2a3f5a" stroke-width="1"/>
+
+  <text x="148" y="62"  font-family="sans-serif" font-size="30" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
+  <text x="149" y="90" font-family="sans-serif" font-size="13" font-weight="400" fill="#7a92b0">Central / Peripheral Line  ·  Osmolarity  ·  Electrolytes  ·  Volumes</text>
+</svg>
+<hr style="border-color:#2a3f5a;margin-top:0;">
+""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PATIENT TYPE
