@@ -89,23 +89,7 @@ pt_col1, pt_col2 = st.columns([2, 5])
 patient_type = pt_col1.radio("👶 Patient Type", ["Adult", "Pediatric"], horizontal=True)
 is_pediatric = patient_type == "Pediatric"
 
-if is_pediatric:
-    pt_col2.markdown("""
-<div class="info-box">
-<b>Pediatric reference ranges:</b>
-Protein: 1.5–3.0 g/kg/day &nbsp;|&nbsp; Dextrose GIR: 5–12 mg/kg/min &nbsp;|&nbsp;
-Lipid: 1–3 g/kg/day &nbsp;|&nbsp; Fluid: 100–150 mL/kg/day &nbsp;|&nbsp;
-Na⁺: 2–4 mmol/kg/day &nbsp;|&nbsp; K⁺: 2–3 mmol/kg/day &nbsp;|&nbsp;
-Ca²⁺/Mg²⁺/PO₄: higher per kg than adults
-</div>""", unsafe_allow_html=True)
-else:
-    pt_col2.markdown("""
-<div class="info-box">
-<b>Adult reference ranges:</b>
-Protein: 0.8–2.0 g/kg/day &nbsp;|&nbsp; Dextrose GIR: 2–5 mg/kg/min &nbsp;|&nbsp;
-Lipid: 0.5–2.5 g/kg/day &nbsp;|&nbsp; Fluid: 25–35 mL/kg/day &nbsp;|&nbsp;
-Na⁺: 1–2 mmol/kg/day &nbsp;|&nbsp; K⁺: 1–2 mmol/kg/day
-</div>""", unsafe_allow_html=True)
+
 
 st.markdown("---")
 
