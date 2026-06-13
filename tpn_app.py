@@ -79,9 +79,9 @@ st.markdown("""
 #  HEADER
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<svg width="100%" viewBox="0 0 680 140" role="img" style="display:block;margin-bottom:4px;">
+<svg width="100%" viewBox="0 0 680 150" role="img" style="display:block;margin-bottom:4px;">
   <title>TPN Compounding Calculator</title>
-  <desc>Minimal IV drip bag with medical cross alongside calculator title</desc>
+  <desc>IV bag icon with title text beside it</desc>
   <style>
     .hook    { fill: none; stroke: #7a92b0; stroke-width: 2.2; stroke-linecap: round; }
     .string  { fill: none; stroke: #7a92b0; stroke-width: 1.5; stroke-linecap: round; }
@@ -96,7 +96,7 @@ st.markdown("""
     .tubecoil{ fill: none; stroke: #7a92b0; stroke-width: 1.6; stroke-linecap: round; }
   </style>
 
-  <g transform="translate(28, 8)">
+  <g transform="translate(20, 5)">
     <path d="M52 6 Q52 2 56 2 Q60 2 60 6" class="hook"/>
     <line x1="56" y1="6"   x2="56" y2="16"  class="string"/>
     <rect x="22" y="16" width="68" height="76" rx="10" class="bag"/>
@@ -113,10 +113,10 @@ st.markdown("""
     <path d="M56 130 Q64 130 64 138" class="tubecoil"/>
   </g>
 
-  <line x1="145" y1="15" x2="145" y2="125" stroke="#2a3f5a" stroke-width="1"/>
+  <line x1="120" y1="10" x2="120" y2="140" stroke="#2a3f5a" stroke-width="1"/>
 
-  <text x="162" y="60"  font-family="sans-serif" font-size="26" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
-  <text x="163" y="86" font-family="sans-serif" font-size="12" font-weight="400" fill="#7a92b0">Central / Peripheral Line  ·  Osmolarity  ·  Electrolytes  ·  Volumes</text>
+  <text x="138" y="58"  font-family="sans-serif" font-size="26" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
+  <text x="138" y="84" font-family="sans-serif" font-size="13" font-weight="400" fill="#7a92b0">Central / Peripheral Line · Osmolarity · Electrolytes · Volumes</text>
 </svg>
 <hr style="border-color:#2a3f5a;margin-top:0;">
 """, unsafe_allow_html=True)
