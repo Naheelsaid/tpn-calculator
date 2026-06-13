@@ -54,6 +54,12 @@ st.markdown("""
     border: 1px solid rgba(0,200,160,0.25); border-radius: 20px;
     padding: 3px 10px; font-size: 0.78rem; color: #00c8a0; margin: 2px 3px;
   }
+  .dex-conc-pill {
+    display: inline-block; background: rgba(255,179,71,0.12);
+    border: 1px solid rgba(255,179,71,0.4); border-radius: 20px;
+    padding: 4px 14px; font-size: 0.85rem; color: #ffb347;
+    margin: 2px 3px; font-weight: 700;
+  }
   .section-divider {
     border-top: 1px solid #2a3f5a; margin: 18px 0 14px;
   }
@@ -110,7 +116,6 @@ st.markdown("---")
 st.markdown("### 👤 Patient Parameters")
 pc1, pc2, pc3, pc4 = st.columns(4)
 
-# Defaults differ by patient type
 _wt_default  = 10.0 if is_pediatric else 70.0
 _wt_max      = 100.0 if is_pediatric else 250.0
 _wt_step     = 0.1  if is_pediatric else 0.5
@@ -123,7 +128,6 @@ duration = pc3.number_input("Duration (hours)", min_value=1, max_value=24, value
 planned_rate = goal_vol / duration
 pc4.metric("Infusion Rate (mL/hr)", f"{planned_rate:.1f}")
 
-# Per-kg fluid dose
 fluid_per_kg = goal_vol / weight if weight > 0 else 0
 st.markdown(f'<span class="result-pill">Fluid: <b>{fluid_per_kg:.1f} mL/kg/day</b></span>', unsafe_allow_html=True)
 
@@ -204,15 +208,11 @@ st.markdown("---")
 st.markdown("### ⚡ Electrolytes — Target Dose Entry")
 st.markdown('<div class="info-box">Enter your <b>total desired dose</b>. The calculator subtracts what the Amino Acid solution already provides (shown in 🟡 orange).</div>', unsafe_allow_html=True)
 
-# ── PRE-READ: Phosphate source — needed before Na AND K expanders ─────────────
-# Session state carries last-render values so credits are available immediately.
 _phos_target_pre = st.session_state.get("phos_target_pre", 0.0)
 _phos_src_pre    = st.session_state.get("phos_src_pre", "K Phosphate B.Braun (0.6 mmol/mL PO₄)")
 _phos_needed_pre = max(0.0, _phos_target_pre - aa_Phos) if _phos_target_pre > 0 else 0.0
 _phos_vol_pre    = _phos_needed_pre / 0.6 if _phos_target_pre > 0 else 0.0
-# K credit from K Phosphate (1 mmol K⁺ per mL)
 k_from_phos  = _phos_vol_pre if (_phos_target_pre > 0 and "K Phosphate" in _phos_src_pre) else 0.0
-# Na credit from Na Phosphate (1 mmol Na⁺ per mL)
 na_from_phos = _phos_vol_pre if (_phos_target_pre > 0 and "Na Phosphate" in _phos_src_pre) else 0.0
 
 # ── SODIUM ────────────────────────────────────────────────────────────────────
@@ -222,9 +222,8 @@ with st.expander("🧂 Sodium — Na⁺", expanded=True):
     ns2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_Na:.1f} mmol</b></div>', unsafe_allow_html=True)
     na_needed = max(0.0, na_target - aa_Na) if na_target > 0 else 0.0
     ns3.metric("Still needed after AA (mmol)", f"{na_needed:.1f}" if na_target > 0 else "—")
-    na_src = ns4.selectbox("Source", ["NaCl 3% (0.513 mmol/mL)"])  # NaCl only; Na Phosphate chosen in PO₄ section
+    na_src = ns4.selectbox("Source", ["NaCl 3% (0.513 mmol/mL)"])
 
-    # Credit Na delivered by Na Phosphate (from PO₄ section)
     na_nacl_needed = max(0.0, na_needed - na_from_phos) if na_target > 0 else 0.0
 
     if na_from_phos > 0 and na_target > 0:
@@ -250,10 +249,9 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
     ks2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_K:.1f} mmol</b></div>', unsafe_allow_html=True)
     k_needed = max(0.0, k_target - aa_K) if k_target > 0 else 0.0
     ks3.metric("Still needed after AA (mmol)", f"{k_needed:.1f}" if k_target > 0 else "—")
-    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol K⁺/mL)", "KCl 2:1 (2 mmol K⁺/mL)"])  # K Phosphate chosen in PO₄ section
-    k_conc = 1.0 if "1:1" in k_src else 2.0   # mmol K⁺ per mL
+    k_src = ks4.selectbox("KCl Source", ["KCl 1:1 (1 mmol K⁺/mL)", "KCl 2:1 (2 mmol K⁺/mL)"])
+    k_conc = 1.0 if "1:1" in k_src else 2.0
 
-    # Credit K delivered by K Phosphate (from PO₄ section)
     k_kcl_needed = max(0.0, k_needed - k_from_phos) if k_target > 0 else 0.0
 
     if k_from_phos > 0 and k_target > 0:
@@ -269,9 +267,8 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
             unsafe_allow_html=True
         )
 
-    # Volume = mmol K needed ÷ concentration; Cl⁻ = volume × 1 mmol/mL (always 1:1 with volume)
     k_vol     = k_kcl_needed / k_conc if k_target > 0 else 0.0
-    k_cl_contribution = k_kcl_needed   # Cl⁻ mmol always equals K⁺ mmol (1:1 molar ratio)
+    k_cl_contribution = k_kcl_needed
     st.metric("→ Volume of KCl to add (mL)", f"{k_vol:.1f}" if k_target > 0 else "—")
     if k_target > 0:
         st.markdown(
@@ -309,7 +306,6 @@ with st.expander("🟦 Phosphate — PO₄³⁻", expanded=True):
     phos_vol = phos_needed / 0.6 if phos_target > 0 else 0.0
     st.metric("→ Volume of PO₄ source to add (mL)", f"{phos_vol:.1f}" if phos_target > 0 else "—")
 
-    # Recalculate with live values (authoritative for totals below)
     k_from_phos  = phos_vol if (phos_target > 0 and "K Phosphate" in phos_src) else 0.0
     na_from_phos = phos_vol if (phos_target > 0 and "Na Phosphate" in phos_src) else 0.0
     if k_from_phos > 0:
@@ -349,7 +345,7 @@ st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIPID EMULSION 20% — separate infusion, excluded from TPN volume & osmolarity
+#  LIPID EMULSION 20%
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🫧 Lipid Emulsion 20% *(Separate Infusion)*")
 st.markdown('<div class="info-box">Lipid 20% is infused separately — <b>not included</b> in TPN total volume or osmolarity calculation.<br><b>Per litre:</b> 200 g fat · 2000 kcal · Osmolarity ≈ 350 mOsm/L (isotonic, peripheral safe)</div>', unsafe_allow_html=True)
@@ -364,9 +360,9 @@ else:
 lipid_vit_vol    = lp3.number_input("Lipid Vitamin Vol (mL)", min_value=0.0, max_value=50.0, value=0.0, step=1.0)
 lipid_infuse_hrs = lp4.number_input("Infuse Over (hours)", min_value=1, max_value=24, value=12, step=1)
 
-lipid_base_vol = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0   # 20% = 200 g/L
-lipid_vol      = lipid_base_vol + lipid_vit_vol                              # total bag volume
-lipid_kcal     = lipid_grams * 9                                            # 9 kcal/g fat
+lipid_base_vol = (lipid_grams / 200) * 1000 if lipid_grams > 0 else 0.0
+lipid_vol      = lipid_base_vol + lipid_vit_vol
+lipid_kcal     = lipid_grams * 9
 lipid_rate     = lipid_vol / lipid_infuse_hrs if lipid_vol > 0 else 0.0
 
 lv1, lv2, lv3 = st.columns(3)
@@ -404,35 +400,34 @@ st.markdown("---")
 #  CALCULATIONS
 # ══════════════════════════════════════════════════════════════════════════════
 total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + extra_nacl3 + trace_vol + mv_vol + wfi_vol
-total_kcal = dex_kcal + aa_kcal                      # TPN kcal only (no lipid)
-total_kcal_with_lipid = total_kcal + lipid_kcal      # grand total including separate lipid
+total_kcal = dex_kcal + aa_kcal
+total_kcal_with_lipid = total_kcal + lipid_kcal
+
+# ── Final glucose concentration in the TPN bag ────────────────────────────────
+final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams > 0) else 0.0
 
 # Electrolyte totals
 tot_Na  = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
-tot_Phos_from_na = na_from_phos * 0.6  # Na Phosphate: 0.6 mmol PO₄ per mmol Na (= per mL)
+tot_Phos_from_na = na_from_phos * 0.6
 
 tot_K   = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg  = aa_Mg + (mg_needed if mg_target > 0 else 0)
 tot_Phos = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
 tot_Cl  = aa_Cl
 if na_target > 0:
-    tot_Cl += na_nacl_needed          # NaCl 3% Cl⁻
+    tot_Cl += na_nacl_needed
 if k_target > 0 and "KCl" in k_src:
-    tot_Cl += k_cl_contribution       # KCl Cl⁻ (= k_vol × 1 mmol/mL)
+    tot_Cl += k_cl_contribution
 tot_Cl += extra_nacl3 * 0.51335
 
-# Acetate — from AA solution only (no added acetate sources)
 tot_Ace = aa_Ace
-
-# Extra NaCl Na
 tot_Na += extra_nacl3 * 0.51335
 
-# OSMOLARITY — correct TPN formula
-# Osm = (g dextrose/L × 5) + (g AA/L × 10) + (mEq cations/L × 2)
+# OSMOLARITY
 vol_L = total_vol / 1000 if total_vol > 0 else 1
 dex_gPerL = dex_grams / vol_L
 aa_gPerL  = aa_grams  / vol_L
-cations_mEq = tot_Na + tot_K + (tot_Mg * 2)   # Mg: 1 mmol = 2 mEq
+cations_mEq = tot_Na + tot_K + (tot_Mg * 2)
 cations_mEqPerL = cations_mEq / vol_L
 
 osm_dex = dex_gPerL * 5
@@ -464,6 +459,20 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# ── Final glucose concentration banner ───────────────────────────────────────
+if dex_grams > 0 and total_vol > 0:
+    dex_conc_color = "#ff5c5c" if final_dex_conc > 12.5 else "#ffb347" if final_dex_conc > 10 else "#00c8a0"
+    dex_conc_note  = "⚠️ Central line required (>12.5%)" if final_dex_conc > 12.5 else "✅ Peripheral safe (≤10%)" if final_dex_conc <= 10 else "⚠️ Consider central line (>10%)"
+    st.markdown(
+        f'<div style="background:rgba(255,179,71,0.08);border:1px solid rgba(255,179,71,0.35);'
+        f'border-radius:8px;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;gap:16px;">'
+        f'<span style="font-size:1.05rem;color:#7a92b0;">🍬 Final Glucose Concentration in TPN Bag:</span>'
+        f'<span style="font-size:1.5rem;font-weight:900;color:{dex_conc_color};">{final_dex_conc:.1f}%</span>'
+        f'<span style="font-size:0.85rem;color:{dex_conc_color};font-weight:600;">{dex_conc_note}</span>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
 # Stat boxes
 actual_rate = total_vol / duration if duration > 0 and total_vol > 0 else 0
@@ -552,13 +561,13 @@ if wfi_vol > 0:
     recipe.append({"Component": "Water for Injection", "Volume (mL)": round(wfi_vol, 1), "Details": "Diluent — 0 mOsm"})
 
 if recipe:
+    # TPN TOTAL row — now includes final glucose concentration
+    dex_conc_str = f" · Final Glucose: {final_dex_conc:.1f}%" if dex_grams > 0 else ""
     recipe.append({"Component": "── TPN TOTAL ──", "Volume (mL)": round(total_vol, 1),
-                   "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}"})
+                   "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}{dex_conc_str}"})
     if lipid_grams > 0:
-        # Row 1: Lipid emulsion base volume
         recipe.append({"Component": "⚡ Lipid Emulsion 20% (separate)", "Volume (mL)": round(lipid_base_vol, 1),
                        "Details": f"{lipid_grams:.1f} g fat · {lipid_kcal:.0f} kcal · NOT included in TPN osmolarity"})
-        # Row 2: Lipid vitamin additive (only if entered)
         if lipid_vit_vol > 0:
             recipe.append({"Component": "⚡ Lipid Vitamin Additive (separate)", "Volume (mL)": round(lipid_vit_vol, 1),
                            "Details": f"Added to lipid bag → Total bag: {lipid_vol:.1f} mL · Rate: {lipid_rate:.1f} mL/hr over {lipid_infuse_hrs}h"})
@@ -570,7 +579,6 @@ if recipe:
     df_recipe = pd.DataFrame(recipe)
     st.dataframe(df_recipe, use_container_width=True, hide_index=True)
 
-    # Download button
     csv = df_recipe.to_csv(index=False)
     st.download_button("⬇️ Download Recipe as CSV", csv, "tpn_recipe.csv", "text/csv")
 else:
@@ -585,6 +593,10 @@ st.markdown("---")
 warnings = []
 if osmolarity > 900:
     warnings.append("⚠️ Osmolarity >900 mOsm/L — Central venous access required.")
+if dex_grams > 0 and final_dex_conc > 12.5:
+    warnings.append(f"⚠️ Final glucose concentration {final_dex_conc:.1f}% exceeds 12.5% — Central venous access required.")
+elif dex_grams > 0 and final_dex_conc > 10:
+    warnings.append(f"⚠️ Final glucose concentration {final_dex_conc:.1f}% exceeds 10% — Consider central line (peripheral limit typically 10–12.5%).")
 if na_target > 0 and na_target < aa_Na:
     warnings.append(f"⚠️ Na⁺ target ({na_target} mmol) is less than what AA solution alone provides ({aa_Na:.1f} mmol). Reconsider target or AA volume.")
 if k_target > 0 and k_target < aa_K:
@@ -592,12 +604,10 @@ if k_target > 0 and k_target < aa_K:
 if tot_K > weight * 3:
     warnings.append("⚠️ Total K⁺ may exceed safe limit (~3 mmol/kg/day max in TPN).")
 
-# GIR threshold: pediatric 12, adult 7
 gir_max = 12 if is_pediatric else 7
 if dex_grams > 0 and dex_gir > gir_max:
     warnings.append(f"⚠️ GIR >{gir_max} mg/kg/min — risk of hyperglycemia. Consider reducing dextrose.")
 
-# Lipid max: pediatric 3, adult 2.5
 lipid_max = 3.0 if is_pediatric else 2.5
 if lipid_grams > 0 and lipid_grams / weight > lipid_max:
     warnings.append(f"⚠️ Lipid dose ({lipid_grams/weight:.2f} g/kg/day) exceeds recommended max ({lipid_max} g/kg/day for {'pediatric' if is_pediatric else 'adult'}).")
