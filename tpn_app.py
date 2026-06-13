@@ -97,7 +97,7 @@ st.markdown("""
   <path d="M47 81 Q47 87 47 88" fill="none" stroke="#3a8dff" stroke-width="1.2" stroke-linecap="round"/>
   <line x1="98" y1="5" x2="98" y2="88" stroke="#2a3f5a" stroke-width="1"/>
   <text x="112" y="40" font-family="sans-serif" font-size="22" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
-  <text x="112" y="60" font-family="sans-serif" font-size="12" font-weight="400" fill="#7a92b0">Central / Peripheral Line · Osmolarity · Electrolytes · Volumes</text>
+
 </svg>
 <hr style="border-color:#2a3f5a;margin-top:0;">
 """, unsafe_allow_html=True)
