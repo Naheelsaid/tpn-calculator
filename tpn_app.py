@@ -79,44 +79,25 @@ st.markdown("""
 #  HEADER
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<svg width="100%" viewBox="0 0 680 100" role="img" style="display:block;margin-bottom:4px;">
+<svg width="100%" viewBox="0 0 680 90" role="img" style="display:block;margin-bottom:4px;">
   <title>TPN Compounding Calculator</title>
   <desc>IV bag icon with title text beside it</desc>
-  <style>
-    .hook    { fill: none; stroke: #7a92b0; stroke-width: 1.5; stroke-linecap: round; }
-    .string  { fill: none; stroke: #7a92b0; stroke-width: 1; stroke-linecap: round; }
-    .bag     { fill: #0d2035; stroke: #00c8a0; stroke-width: 1.2; }
-    .fluid   { fill: #0a3d2e; }
-    .waveline{ fill: none; stroke: #00c8a0; stroke-width: 0.8; opacity: 0.5; }
-    .cross   { fill: #00c8a0; }
-    .neck    { fill: #0d2035; stroke: #00c8a0; stroke-width: 1; }
-    .chamber { fill: #071626; stroke: #3a8dff; stroke-width: 1; }
-    .droptube{ fill: none; stroke: #3a8dff; stroke-width: 1.2; stroke-linecap: round; }
-    .droplet { fill: #3a8dff; }
-    .tubecoil{ fill: none; stroke: #7a92b0; stroke-width: 1; stroke-linecap: round; }
-  </style>
-
-  <g transform="translate(10, 4) scale(0.6)">
-    <path d="M52 6 Q52 2 56 2 Q60 2 60 6" class="hook"/>
-    <line x1="56" y1="6"   x2="56" y2="16"  class="string"/>
-    <rect x="22" y="16" width="68" height="76" rx="10" class="bag"/>
-    <rect x="22" y="60" width="68" height="32" rx="0"  class="fluid" style="clip-path:inset(0 0 0 0 round 0 0 10px 10px)"/>
-    <path d="M22 60 Q30 55 38 60 Q46 65 54 60 Q62 55 70 60 Q78 65 86 60 Q90 58 90 60" class="waveline"/>
-    <rect x="44" y="25" width="24" height="24" rx="3" style="fill:#071626;stroke:#00c8a0;stroke-width:1;"/>
-    <rect x="51" y="29" width="10" height="16" rx="2" class="cross"/>
-    <rect x="46" y="34" width="20" height="6"  rx="2" class="cross"/>
-    <rect x="46" y="92"  width="20" height="6"  rx="3" class="neck"/>
-    <rect x="49" y="98"  width="14" height="4"  rx="2" class="neck"/>
-    <rect x="46" y="102" width="20" height="16" rx="4" class="chamber"/>
-    <ellipse cx="56" cy="113" rx="2.5" ry="3" class="droplet"/>
-    <path d="M56 118 Q56 124 56 130" class="droptube"/>
-    <path d="M56 130 Q64 130 64 138" class="tubecoil"/>
-  </g>
-
-  <line x1="78" y1="8" x2="78" y2="92" stroke="#2a3f5a" stroke-width="1"/>
-
-  <text x="92" y="42" font-family="sans-serif" font-size="22" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
-  <text x="92" y="64" font-family="sans-serif" font-size="12" font-weight="400" fill="#7a92b0">Central / Peripheral Line · Osmolarity · Electrolytes · Volumes</text>
+  <path d="M44 5 Q44 2 47 2 Q50 2 50 5" fill="none" stroke="#7a92b0" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="47" y1="5" x2="47" y2="12" stroke="#7a92b0" stroke-width="1" stroke-linecap="round"/>
+  <rect x="12" y="12" width="70" height="48" rx="8" fill="#0d2035" stroke="#00c8a0" stroke-width="1.4"/>
+  <rect x="12" y="38" width="70" height="22" rx="0" fill="#0a3d2e" style="clip-path:inset(0 0 0 0 round 0 0 8px 8px)"/>
+  <path d="M12 38 Q19 34 26 38 Q33 42 40 38 Q47 34 54 38 Q61 42 68 38 Q75 36 82 38" fill="none" stroke="#00c8a0" stroke-width="0.8" opacity="0.5"/>
+  <rect x="33" y="17" width="28" height="18" rx="3" fill="#071626" stroke="#00c8a0" stroke-width="0.8"/>
+  <rect x="39" y="19" width="8"  height="14" rx="1.5" fill="#00c8a0"/>
+  <rect x="35" y="23" width="24" height="5"  rx="1.5" fill="#00c8a0"/>
+  <rect x="38" y="60" width="18" height="5"  rx="2" fill="#0d2035" stroke="#00c8a0" stroke-width="1"/>
+  <rect x="41" y="65" width="12" height="3"  rx="1.5" fill="#0d2035" stroke="#00c8a0" stroke-width="0.8"/>
+  <rect x="38" y="68" width="18" height="13" rx="3" fill="#071626" stroke="#3a8dff" stroke-width="1"/>
+  <ellipse cx="47" cy="76" rx="2" ry="2.5" fill="#3a8dff"/>
+  <path d="M47 81 Q47 87 47 88" fill="none" stroke="#3a8dff" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="98" y1="5" x2="98" y2="88" stroke="#2a3f5a" stroke-width="1"/>
+  <text x="112" y="40" font-family="sans-serif" font-size="22" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
+  <text x="112" y="60" font-family="sans-serif" font-size="12" font-weight="400" fill="#7a92b0">Central / Peripheral Line · Osmolarity · Electrolytes · Volumes</text>
 </svg>
 <hr style="border-color:#2a3f5a;margin-top:0;">
 """, unsafe_allow_html=True)
