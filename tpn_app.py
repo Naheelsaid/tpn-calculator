@@ -79,7 +79,7 @@ st.markdown("""
 #  HEADER
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<svg width="100%" viewBox="0 0 780 140" role="img" style="display:block;margin-bottom:4px;">
+<svg width="100%" viewBox="0 0 680 140" role="img" style="display:block;margin-bottom:4px;">
   <title>TPN Compounding Calculator</title>
   <desc>Minimal IV drip bag with medical cross alongside calculator title</desc>
   <style>
@@ -113,10 +113,10 @@ st.markdown("""
     <path d="M56 130 Q64 130 64 138" class="tubecoil"/>
   </g>
 
-  <line x1="128" y1="20" x2="128" y2="120" stroke="#2a3f5a" stroke-width="1"/>
+  <line x1="145" y1="15" x2="145" y2="125" stroke="#2a3f5a" stroke-width="1"/>
 
-  <text x="148" y="62"  font-family="sans-serif" font-size="30" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
-  <text x="149" y="90" font-family="sans-serif" font-size="13" font-weight="400" fill="#7a92b0">Central / Peripheral Line  ·  Osmolarity  ·  Electrolytes  ·  Volumes</text>
+  <text x="162" y="60"  font-family="sans-serif" font-size="26" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
+  <text x="163" y="86" font-family="sans-serif" font-size="12" font-weight="400" fill="#7a92b0">Central / Peripheral Line  ·  Osmolarity  ·  Electrolytes  ·  Volumes</text>
 </svg>
 <hr style="border-color:#2a3f5a;margin-top:0;">
 """, unsafe_allow_html=True)
