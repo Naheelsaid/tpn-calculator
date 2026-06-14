@@ -430,7 +430,7 @@ tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_ph
 tot_Phos_from_na = na_from_phos * 0.6
 tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)   # mmol
-tot_Mg_meq       = tot_Mg * 2                                     # mEq for display
+tot_Mg_meq       = tot_Mg * 2                                     # mEq for display & osmolarity
 tot_Phos         = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
 tot_Cl           = aa_Cl
 if na_target > 0:
@@ -441,20 +441,22 @@ tot_Cl  += extra_nacl3 * 0.51335
 tot_Ace  = aa_Ace
 tot_Na  += extra_nacl3 * 0.51335
 
-# ── OSMOLARITY — cations per litre × valence, summed, then × 2 ───────────────
+# ── OSMOLARITY ────────────────────────────────────────────────────────────────
+# Formula:
+#   (dextrose g/L × 5)
+# + (AA g/L × 10)
+# + (Na salt mEq/L × 2)   — NaCl, acetate, phosphate all grouped under Na
+# + (K salt mEq/L × 2)    — KCl, acetate, phosphate all grouped under K
+# + (Mg sulfate mEq/L × 1) — SO₄²⁻ is divalent so factor is 1 per mEq
 vol_L = total_vol / 1000 if total_vol > 0 else 1
 
-osm_dex = (dex_grams / vol_L) * 5          # non-ionic, no ×2
-osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic, no ×2
+osm_dex = (dex_grams / vol_L) * 5          # non-ionic
+osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic
+osm_Na  = (tot_Na    / vol_L) * 2          # Na salt (Cl/acetate/phosphate) × 2 mOsm/mEq
+osm_K   = (tot_K     / vol_L) * 2          # K salt (Cl/acetate/phosphate) × 2 mOsm/mEq
+osm_Mg  = (tot_Mg_meq / vol_L) * 1         # MgSO₄ × 1 mOsm/mEq (SO₄²⁻ divalent)
 
-osm_Na  = tot_Na / vol_L                   # mmol/L × 1 (monovalent)
-osm_K   = tot_K  / vol_L                   # mmol/L × 1 (monovalent)
-osm_Mg  = (tot_Mg / vol_L) * 2             # mmol/L × 2 (divalent valence)
-
-cation_sum_per_L = osm_Na + osm_K + osm_Mg
-osm_cat          = cation_sum_per_L * 2    # ×2 for paired anions
-
-osmolarity = round(osm_dex + osm_aa + osm_cat)
+osmolarity = round(osm_dex + osm_aa + osm_Na + osm_K + osm_Mg)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -528,8 +530,8 @@ st.markdown("---")
 st.markdown("### 📐 Osmolarity Breakdown")
 st.markdown(
     '<div class="info-box">'
-    '<b>Formula:</b> Osmolarity = (dextrose g/L × 5) + (AA g/L × 10) + (cation sum per litre × 2)<br>'
-    'Na⁺ mmol/L × 1 · K⁺ mmol/L × 1 · Mg²⁺ mmol/L × 2 (divalent) → sum × 2 for counter-ions'
+    '<b>Formula:</b> (dextrose g/L × 5) + (AA g/L × 10) + (Na salt mEq/L × 2) + (K salt mEq/L × 2) + (Mg sulfate mEq/L × 1)<br>'
+    'Na and K grouped by cation regardless of paired anion (Cl⁻, acetate, phosphate) · MgSO₄ × 1 because SO₄²⁻ is divalent'
     '</div>',
     unsafe_allow_html=True
 )
@@ -543,18 +545,14 @@ if aa_grams > 0:
     osm_data.append({"Component": f"Amino Acids ({aa_grams/vol_L:.1f} g/L × 10)",
                      "mOsm/L": round(osm_aa, 1), "Note": "non-ionic"})
 if tot_Na > 0:
-    osm_data.append({"Component": f"Na⁺ ({tot_Na/vol_L:.1f} mmol/L × 1)",
-                     "mOsm/L": round(osm_Na, 1), "Note": "cation"})
+    osm_data.append({"Component": f"Na salt ({tot_Na/vol_L:.1f} mEq/L × 2)",
+                     "mOsm/L": round(osm_Na, 1), "Note": "NaCl / acetate / phosphate"})
 if tot_K > 0:
-    osm_data.append({"Component": f"K⁺ ({tot_K/vol_L:.1f} mmol/L × 1)",
-                     "mOsm/L": round(osm_K, 1), "Note": "cation"})
-if tot_Mg > 0:
-    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg/vol_L:.1f} mmol/L × 2)",
-                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent"})
-osm_data.append({"Component": "Cation sum per litre",
-                 "mOsm/L": round(cation_sum_per_L, 1), "Note": "before ×2"})
-osm_data.append({"Component": "Cation sum × 2  (with counter-ions)",
-                 "mOsm/L": round(osm_cat, 1), "Note": ""})
+    osm_data.append({"Component": f"K salt ({tot_K/vol_L:.1f} mEq/L × 2)",
+                     "mOsm/L": round(osm_K, 1), "Note": "KCl / acetate / phosphate"})
+if tot_Mg_meq > 0:
+    osm_data.append({"Component": f"Mg sulfate ({tot_Mg_meq/vol_L:.1f} mEq/L × 1)",
+                     "mOsm/L": round(osm_Mg, 1), "Note": "MgSO₄ — SO₄²⁻ divalent"})
 osm_data.append({"Component": f"TOTAL  ({total_vol:.0f} mL)",
                  "mOsm/L": osmolarity, "Note": ""})
 
