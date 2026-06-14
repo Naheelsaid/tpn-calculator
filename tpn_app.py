@@ -279,10 +279,10 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
         )
 
 # ── MAGNESIUM ─────────────────────────────────────────────────────────────────
-# MgSO₄ concentration: 8.1 mEq / 10 mL = 0.81 mEq/mL = 0.405 mmol/mL
-MG_MEQ_PER_ML = 0.81    # mEq/mL
-MG_MMOL_PER_ML = 0.405  # mmol/mL  (divalent: mEq ÷ 2)
-MG_VIAL_ML = 10         # mL per vial
+# MgSO₄: 8.1 mEq / 10 mL = 0.81 mEq/mL = 0.405 mmol/mL
+MG_MEQ_PER_ML  = 0.81
+MG_MMOL_PER_ML = 0.405
+MG_VIAL_ML     = 10
 
 with st.expander("🟩 Magnesium — Mg²⁺", expanded=True):
     st.markdown(
@@ -293,11 +293,11 @@ with st.expander("🟩 Magnesium — Mg²⁺", expanded=True):
     )
     ms1, ms2, ms3, ms4 = st.columns(4)
     mg_target_meq = ms1.number_input("Target Mg²⁺ (mEq/day)", min_value=0.0, value=0.0, step=1.0)
-    mg_target     = mg_target_meq / 2              # mEq → mmol
-    aa_Mg_meq     = aa_Mg * 2                      # AA contribution in mEq
+    mg_target     = mg_target_meq / 2
+    aa_Mg_meq     = aa_Mg * 2
     ms2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_Mg_meq:.1f} mEq</b> ({aa_Mg:.2f} mmol)</div>', unsafe_allow_html=True)
-    mg_needed     = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0   # mmol still needed
-    mg_needed_meq = mg_needed * 2                   # back to mEq for display
+    mg_needed     = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0
+    mg_needed_meq = mg_needed * 2
     ms3.metric("Still needed (mEq)", f"{mg_needed_meq:.1f}" if mg_target_meq > 0 else "—")
     mg_vol   = mg_needed / MG_MMOL_PER_ML if mg_target_meq > 0 else 0.0
     mg_vials = mg_vol / MG_VIAL_ML
@@ -430,7 +430,7 @@ tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_ph
 tot_Phos_from_na = na_from_phos * 0.6
 tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)   # mmol
-tot_Mg_meq       = tot_Mg * 2                                     # mEq (divalent: 1 mmol = 2 mEq)
+tot_Mg_meq       = tot_Mg * 2                                     # mEq for display
 tot_Phos         = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
 tot_Cl           = aa_Cl
 if na_target > 0:
@@ -447,9 +447,9 @@ vol_L = total_vol / 1000 if total_vol > 0 else 1
 osm_dex = (dex_grams / vol_L) * 5          # non-ionic, no ×2
 osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic, no ×2
 
-osm_Na  = tot_Na     / vol_L               # mmol/L × 1 (monovalent)
-osm_K   = tot_K      / vol_L               # mmol/L × 1 (monovalent)
-osm_Mg  = tot_Mg_meq / vol_L              # mEq/L (already accounts for divalent valence)
+osm_Na  = tot_Na / vol_L                   # mmol/L × 1 (monovalent)
+osm_K   = tot_K  / vol_L                   # mmol/L × 1 (monovalent)
+osm_Mg  = (tot_Mg / vol_L) * 2             # mmol/L × 2 (divalent valence)
 
 cation_sum_per_L = osm_Na + osm_K + osm_Mg
 osm_cat          = cation_sum_per_L * 2    # ×2 for paired anions
@@ -529,7 +529,7 @@ st.markdown("### 📐 Osmolarity Breakdown")
 st.markdown(
     '<div class="info-box">'
     '<b>Formula:</b> Osmolarity = (dextrose g/L × 5) + (AA g/L × 10) + (cation sum per litre × 2)<br>'
-    'Na⁺ and K⁺ in mmol/L · Mg²⁺ in mEq/L (divalent: mmol × 2) → cation sum × 2 for counter-ions'
+    'Na⁺ mmol/L × 1 · K⁺ mmol/L × 1 · Mg²⁺ mmol/L × 2 (divalent) → sum × 2 for counter-ions'
     '</div>',
     unsafe_allow_html=True
 )
@@ -548,9 +548,9 @@ if tot_Na > 0:
 if tot_K > 0:
     osm_data.append({"Component": f"K⁺ ({tot_K/vol_L:.1f} mmol/L × 1)",
                      "mOsm/L": round(osm_K, 1), "Note": "cation"})
-if tot_Mg_meq > 0:
-    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg_meq/vol_L:.1f} mEq/L)",
-                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent (as mEq)"})
+if tot_Mg > 0:
+    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg/vol_L:.1f} mmol/L × 2)",
+                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent"})
 osm_data.append({"Component": "Cation sum per litre",
                  "mOsm/L": round(cation_sum_per_L, 1), "Note": "before ×2"})
 osm_data.append({"Component": "Cation sum × 2  (with counter-ions)",
