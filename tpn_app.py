@@ -97,7 +97,6 @@ st.markdown("""
   <path d="M47 81 Q47 87 47 88" fill="none" stroke="#3a8dff" stroke-width="1.2" stroke-linecap="round"/>
   <line x1="98" y1="5" x2="98" y2="88" stroke="#2a3f5a" stroke-width="1"/>
   <text x="112" y="40" font-family="sans-serif" font-size="22" font-weight="700" fill="#00c8a0">TPN Compounding Calculator</text>
-
 </svg>
 <hr style="border-color:#2a3f5a;margin-top:0;">
 """, unsafe_allow_html=True)
@@ -108,8 +107,6 @@ st.markdown("""
 pt_col1, pt_col2 = st.columns([2, 5])
 patient_type = pt_col1.radio("👶 Patient Type", ["Adult", "Pediatric"], horizontal=True)
 is_pediatric = patient_type == "Pediatric"
-
-
 
 st.markdown("---")
 
@@ -148,13 +145,13 @@ d1, d2, d3, d4 = st.columns(4)
 dex_conc_label = d1.selectbox("Concentration (%)", ["5% (50 g/L)", "10% (100 g/L)", "20% (200 g/L)", "25% (250 g/L)", "50% (500 g/L)"], index=2)
 dex_conc = float(dex_conc_label.split("%")[0])
 
-dex_gkg   = d2.number_input("Dose (g/kg/day)", min_value=0.0, max_value=30.0, value=0.0, step=0.5)
+dex_gkg = d2.number_input("Dose (g/kg/day)", min_value=0.0, max_value=30.0, value=0.0, step=0.5)
 if dex_gkg > 0:
     dex_grams = weight * dex_gkg
 else:
     dex_grams = d3.number_input("Dextrose (grams)", min_value=0.0, max_value=5000.0, value=0.0, step=5.0)
 
-dex_vol = (dex_grams / (dex_conc / 100)) if dex_grams > 0 else 0.0
+dex_vol  = (dex_grams / (dex_conc / 100)) if dex_grams > 0 else 0.0
 d4.metric("→ Volume (mL)", f"{dex_vol:.1f}")
 
 dex_kcal = dex_grams * 3.4
@@ -185,15 +182,15 @@ else:
 aa_vol  = (aa_grams / 100) * 1000 if aa_grams > 0 else 0.0
 a3.metric("→ Volume (mL)", f"{aa_vol:.1f}")
 
-aa_kcal  = aa_grams * 4
-aa_frac  = aa_vol / 1000
-aa_Na    = 50  * aa_frac
-aa_K     = 25  * aa_frac
-aa_Mg    = 2.5 * aa_frac
-aa_Phos  = 10  * aa_frac
-aa_Cl    = 52  * aa_frac
-aa_Ace   = 46  * aa_frac
-aa_Cit   = 2   * aa_frac
+aa_kcal = aa_grams * 4
+aa_frac = aa_vol / 1000
+aa_Na   = 50  * aa_frac
+aa_K    = 25  * aa_frac
+aa_Mg   = 2.5 * aa_frac
+aa_Phos = 10  * aa_frac
+aa_Cl   = 52  * aa_frac
+aa_Ace  = 46  * aa_frac
+aa_Cit  = 2   * aa_frac
 
 if aa_grams > 0:
     st.markdown(f'<span class="result-pill">Protein: <b>{aa_grams:.1f} g</b></span>'
@@ -271,7 +268,7 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
             unsafe_allow_html=True
         )
 
-    k_vol     = k_kcl_needed / k_conc if k_target > 0 else 0.0
+    k_vol             = k_kcl_needed / k_conc if k_target > 0 else 0.0
     k_cl_contribution = k_kcl_needed
     st.metric("→ Volume of KCl to add (mL)", f"{k_vol:.1f}" if k_target > 0 else "—")
     if k_target > 0:
@@ -281,19 +278,18 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
             unsafe_allow_html=True
         )
 
-
 # ── MAGNESIUM ─────────────────────────────────────────────────────────────────
 with st.expander("🟩 Magnesium — Mg²⁺", expanded=True):
     st.markdown('<div class="info-box">MgSO₄: <b>8 mEq / 10 mL</b>. Mg²⁺ is divalent → <b>1 mmol = 2 mEq</b>, so each vial = 8 mEq = 4 mmol. Enter target in <b>mEq</b> — converted to mmol internally (÷ 2) for volume and osmolarity.</div>', unsafe_allow_html=True)
     ms1, ms2, ms3, ms4 = st.columns(4)
     mg_target_meq = ms1.number_input("Target Mg²⁺ (mEq/day)", min_value=0.0, value=0.0, step=1.0)
-    mg_target = mg_target_meq / 2   # convert mEq → mmol for all downstream use
-    aa_Mg_meq = aa_Mg * 2           # display AA contribution in mEq
+    mg_target     = mg_target_meq / 2
+    aa_Mg_meq     = aa_Mg * 2
     ms2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_Mg_meq:.1f} mEq</b> ({aa_Mg:.2f} mmol)</div>', unsafe_allow_html=True)
-    mg_needed = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0
+    mg_needed     = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0
     mg_needed_meq = mg_needed * 2
     ms3.metric("Still needed (mEq)", f"{mg_needed_meq:.1f}" if mg_target_meq > 0 else "—")
-    mg_vol   = mg_needed / 0.4 if mg_target_meq > 0 else 0.0   # 0.4 mmol/mL = 0.8 mEq/mL
+    mg_vol   = mg_needed / 0.4 if mg_target_meq > 0 else 0.0
     mg_vials = mg_vol / 10
     ms4.metric("Vials (10 mL each)", f"{mg_vials:.1f}" if mg_target_meq > 0 else "—")
     st.metric("→ Volume of MgSO₄ to add (mL)", f"{mg_vol:.1f}" if mg_target_meq > 0 else "—")
@@ -419,33 +415,34 @@ total_kcal_with_lipid = total_kcal + lipid_kcal
 # ── Final glucose concentration in the TPN bag ────────────────────────────────
 final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams > 0) else 0.0
 
-# Electrolyte totals
-tot_Na  = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
+# ── Electrolyte totals ────────────────────────────────────────────────────────
+tot_Na       = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
 tot_Phos_from_na = na_from_phos * 0.6
-
-tot_K   = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
-tot_Mg  = aa_Mg + (mg_needed if mg_target > 0 else 0)
-tot_Phos = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
-tot_Cl  = aa_Cl
+tot_K        = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
+tot_Mg       = aa_Mg + (mg_needed if mg_target > 0 else 0)
+tot_Phos     = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
+tot_Cl       = aa_Cl
 if na_target > 0:
     tot_Cl += na_nacl_needed
 if k_target > 0 and "KCl" in k_src:
     tot_Cl += k_cl_contribution
-tot_Cl += extra_nacl3 * 0.51335
+tot_Cl  += extra_nacl3 * 0.51335
+tot_Ace  = aa_Ace
+tot_Na  += extra_nacl3 * 0.51335
 
-tot_Ace = aa_Ace
-tot_Na += extra_nacl3 * 0.51335
+# ── OSMOLARITY — cations per litre × valence, summed, then × 2 ───────────────
+vol_L = total_vol / 1000 
 
-# OSMOLARITY
-vol_L = total_vol / 1000 if total_vol > 0 else 1
-dex_gPerL = dex_grams / vol_L
-aa_gPerL  = aa_grams  / vol_L
-cations_mEq = tot_Na + tot_K + (tot_Mg * 2)
-cations_mEqPerL = cations_mEq / vol_L
+osm_dex = (dex_grams / vol_L) * 5          # non-ionic, no ×2
+osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic, no ×2
 
-osm_dex = dex_gPerL * 5
-osm_aa  = aa_gPerL  * 10
-osm_cat = cations_mEqPerL * 2
+osm_Na  = tot_Na / vol_L                   # mmol/L × 1 (monovalent)
+osm_K   = tot_K  / vol_L                   # mmol/L × 1 (monovalent)
+osm_Mg  = (tot_Mg / vol_L) * 2             # mmol/L × 2 (divalent)
+
+cation_sum_per_L = osm_Na + osm_K + osm_Mg
+osm_cat          = cation_sum_per_L * 2    # ×2 for paired anions
+
 osmolarity = round(osm_dex + osm_aa + osm_cat)
 
 
@@ -460,7 +457,7 @@ if osmolarity > 900:
 else:
     st.markdown(f'<div class="osm-peripheral">✅ Peripheral Line Safe — Osmolarity: {osmolarity} mOsm/L (≤900)</div>', unsafe_allow_html=True)
 
-osm_pct = min(100, (osmolarity / 1800) * 100)
+osm_pct   = min(100, (osmolarity / 1800) * 100)
 bar_color = "#ff5c5c" if osmolarity > 900 else "#ffb347" if osmolarity > 600 else "#00c8a0"
 st.markdown(f"""
 <div style="background:#162032;border-radius:20px;height:14px;overflow:hidden;margin:10px 0 4px;">
@@ -519,17 +516,37 @@ st.markdown("---")
 #  OSMOLARITY BREAKDOWN
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 📐 Osmolarity Breakdown")
-st.markdown('<div class="info-box"><b>Formula:</b> Osmolarity (mOsm/L) = (g dextrose/L × 5) + (g amino acid/L × 10) + (mEq cations/L × 2)<br>Mg counts as 2 mEq per mmol (divalent cation)</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="info-box">'
+    '<b>Formula:</b> Osmolarity = (dextrose g/L × 5) + (AA g/L × 10) + (cation sum per litre × 2)<br>'
+    'Each cation counted by valence first: Na⁺ × 1 · K⁺ × 1 · Mg²⁺ × 2 → sum × 2 for counter-ions'
+    '</div>',
+    unsafe_allow_html=True
+)
 
 import pandas as pd
 osm_data = []
 if dex_grams > 0:
-    osm_data.append({"Component": f"Dextrose ({dex_gPerL:.1f} g/L × 5)", "mOsm/L": round(osm_dex)})
+    osm_data.append({"Component": f"Dextrose ({dex_grams/vol_L:.1f} g/L × 5)",
+                     "mOsm/L": round(osm_dex, 1), "Note": "non-ionic"})
 if aa_grams > 0:
-    osm_data.append({"Component": f"Amino Acids ({aa_gPerL:.1f} g/L × 10)", "mOsm/L": round(osm_aa)})
-if cations_mEq > 0:
-    osm_data.append({"Component": f"Cations ({cations_mEqPerL:.1f} mEq/L × 2)  [Na {tot_Na:.1f} + K {tot_K:.1f} + Mg {tot_Mg:.1f}×2]", "mOsm/L": round(osm_cat)})
-osm_data.append({"Component": f"TOTAL  ({total_vol:.0f} mL)", "mOsm/L": osmolarity})
+    osm_data.append({"Component": f"Amino Acids ({aa_grams/vol_L:.1f} g/L × 10)",
+                     "mOsm/L": round(osm_aa, 1), "Note": "non-ionic"})
+if tot_Na > 0:
+    osm_data.append({"Component": f"Na⁺ ({tot_Na/vol_L:.1f} mmol/L × 1)",
+                     "mOsm/L": round(osm_Na, 1), "Note": "cation"})
+if tot_K > 0:
+    osm_data.append({"Component": f"K⁺ ({tot_K/vol_L:.1f} mmol/L × 1)",
+                     "mOsm/L": round(osm_K, 1), "Note": "cation"})
+if tot_Mg > 0:
+    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg/vol_L:.1f} mmol/L × 2)",
+                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent"})
+osm_data.append({"Component": "Cation sum per litre",
+                 "mOsm/L": round(cation_sum_per_L, 1), "Note": "before ×2"})
+osm_data.append({"Component": "Cation sum × 2  (with counter-ions)",
+                 "mOsm/L": round(osm_cat, 1), "Note": ""})
+osm_data.append({"Component": f"TOTAL  ({total_vol:.0f} mL)",
+                 "mOsm/L": osmolarity, "Note": ""})
 
 df_osm = pd.DataFrame(osm_data)
 st.dataframe(df_osm, use_container_width=True, hide_index=True)
@@ -574,7 +591,6 @@ if wfi_vol > 0:
     recipe.append({"Component": "Water for Injection", "Volume (mL)": round(wfi_vol, 1), "Details": "Diluent — 0 mOsm"})
 
 if recipe:
-    # TPN TOTAL row — now includes final glucose concentration
     dex_conc_str = f" · Final Glucose: {final_dex_conc:.1f}%" if dex_grams > 0 else ""
     recipe.append({"Component": "── TPN TOTAL ──", "Volume (mL)": round(total_vol, 1),
                    "Details": f"Osmolarity: {osmolarity} mOsm/L · {'⚠️ CENTRAL LINE' if osmolarity > 900 else '✅ Peripheral safe'}{dex_conc_str}"})
