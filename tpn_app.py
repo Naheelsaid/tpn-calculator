@@ -279,18 +279,28 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
         )
 
 # ── MAGNESIUM ─────────────────────────────────────────────────────────────────
+# MgSO₄ concentration: 8.1 mEq / 10 mL = 0.81 mEq/mL = 0.405 mmol/mL
+MG_MEQ_PER_ML = 0.81    # mEq/mL
+MG_MMOL_PER_ML = 0.405  # mmol/mL  (divalent: mEq ÷ 2)
+MG_VIAL_ML = 10         # mL per vial
+
 with st.expander("🟩 Magnesium — Mg²⁺", expanded=True):
-    st.markdown('<div class="info-box">MgSO₄: <b>8 mEq / 10 mL</b>. Mg²⁺ is divalent → <b>1 mmol = 2 mEq</b>, so each vial = 8 mEq = 4 mmol. Enter target in <b>mEq</b> — converted to mmol internally (÷ 2) for volume and osmolarity.</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="info-box">MgSO₄: <b>8.1 mEq / 10 mL</b> ({MG_MEQ_PER_ML} mEq/mL = {MG_MMOL_PER_ML} mmol/mL). '
+        f'Mg²⁺ is divalent → <b>1 mmol = 2 mEq</b>. '
+        f'Enter target in <b>mEq</b> — converted to mmol internally (÷ 2) for volume and osmolarity.</div>',
+        unsafe_allow_html=True
+    )
     ms1, ms2, ms3, ms4 = st.columns(4)
     mg_target_meq = ms1.number_input("Target Mg²⁺ (mEq/day)", min_value=0.0, value=0.0, step=1.0)
-    mg_target     = mg_target_meq / 2
-    aa_Mg_meq     = aa_Mg * 2
+    mg_target     = mg_target_meq / 2              # mEq → mmol
+    aa_Mg_meq     = aa_Mg * 2                      # AA contribution in mEq
     ms2.markdown(f'<div class="from-aa">🟡 From AA: <b>{aa_Mg_meq:.1f} mEq</b> ({aa_Mg:.2f} mmol)</div>', unsafe_allow_html=True)
-    mg_needed     = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0
-    mg_needed_meq = mg_needed * 2
+    mg_needed     = max(0.0, mg_target - aa_Mg) if mg_target_meq > 0 else 0.0   # mmol still needed
+    mg_needed_meq = mg_needed * 2                   # back to mEq for display
     ms3.metric("Still needed (mEq)", f"{mg_needed_meq:.1f}" if mg_target_meq > 0 else "—")
-    mg_vol   = mg_needed / 0.4 if mg_target_meq > 0 else 0.0
-    mg_vials = mg_vol / 10
+    mg_vol   = mg_needed / MG_MMOL_PER_ML if mg_target_meq > 0 else 0.0
+    mg_vials = mg_vol / MG_VIAL_ML
     ms4.metric("Vials (10 mL each)", f"{mg_vials:.1f}" if mg_target_meq > 0 else "—")
     st.metric("→ Volume of MgSO₄ to add (mL)", f"{mg_vol:.1f}" if mg_target_meq > 0 else "—")
     if mg_target_meq > 0:
@@ -416,12 +426,13 @@ total_kcal_with_lipid = total_kcal + lipid_kcal
 final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams > 0) else 0.0
 
 # ── Electrolyte totals ────────────────────────────────────────────────────────
-tot_Na       = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
+tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
 tot_Phos_from_na = na_from_phos * 0.6
-tot_K        = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
-tot_Mg       = aa_Mg + (mg_needed if mg_target > 0 else 0)
-tot_Phos     = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
-tot_Cl       = aa_Cl
+tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
+tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)   # mmol
+tot_Mg_meq       = tot_Mg * 2                                     # mEq (divalent: 1 mmol = 2 mEq)
+tot_Phos         = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
+tot_Cl           = aa_Cl
 if na_target > 0:
     tot_Cl += na_nacl_needed
 if k_target > 0 and "KCl" in k_src:
@@ -431,14 +442,14 @@ tot_Ace  = aa_Ace
 tot_Na  += extra_nacl3 * 0.51335
 
 # ── OSMOLARITY — cations per litre × valence, summed, then × 2 ───────────────
-vol_L = total_vol / 1000 
+vol_L = total_vol / 1000 if total_vol > 0 else 1
 
 osm_dex = (dex_grams / vol_L) * 5          # non-ionic, no ×2
 osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic, no ×2
 
-osm_Na  = tot_Na / vol_L                   # mmol/L × 1 (monovalent)
-osm_K   = tot_K  / vol_L                   # mmol/L × 1 (monovalent)
-osm_Mg  = (tot_Mg / vol_L) * 2             # mmol/L × 2 (divalent)
+osm_Na  = tot_Na     / vol_L               # mmol/L × 1 (monovalent)
+osm_K   = tot_K      / vol_L               # mmol/L × 1 (monovalent)
+osm_Mg  = tot_Mg_meq / vol_L              # mEq/L (already accounts for divalent valence)
 
 cation_sum_per_L = osm_Na + osm_K + osm_Mg
 osm_cat          = cation_sum_per_L * 2    # ×2 for paired anions
@@ -451,7 +462,6 @@ osmolarity = round(osm_dex + osm_aa + osm_cat)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("## 📊 Results Summary")
 
-# Osmolarity + route
 if osmolarity > 900:
     st.markdown(f'<div class="osm-central">⚠️ CENTRAL LINE Required — Osmolarity: {osmolarity} mOsm/L (>900)</div>', unsafe_allow_html=True)
 else:
@@ -504,7 +514,7 @@ if lipid_grams > 0:
 sc5, sc6, sc7, sc8, sc9, sc10 = st.columns(6)
 sc5.metric("Na⁺ total (mmol)", f"{tot_Na:.1f}")
 sc6.metric("K⁺ total (mmol)", f"{tot_K:.1f}")
-sc7.metric("Mg²⁺ total (mEq)", f"{tot_Mg*2:.1f}")
+sc7.metric("Mg²⁺ total (mEq)", f"{tot_Mg_meq:.1f}")
 sc8.metric("PO₄³⁻ total (mmol)", f"{tot_Phos:.1f}")
 sc9.metric("Cl⁻ total (mmol)", f"{tot_Cl:.1f}")
 sc10.metric("Acetate total (mmol)", f"{tot_Ace:.1f}")
@@ -519,7 +529,7 @@ st.markdown("### 📐 Osmolarity Breakdown")
 st.markdown(
     '<div class="info-box">'
     '<b>Formula:</b> Osmolarity = (dextrose g/L × 5) + (AA g/L × 10) + (cation sum per litre × 2)<br>'
-    'Each cation counted by valence first: Na⁺ × 1 · K⁺ × 1 · Mg²⁺ × 2 → sum × 2 for counter-ions'
+    'Na⁺ and K⁺ in mmol/L · Mg²⁺ in mEq/L (divalent: mmol × 2) → cation sum × 2 for counter-ions'
     '</div>',
     unsafe_allow_html=True
 )
@@ -538,9 +548,9 @@ if tot_Na > 0:
 if tot_K > 0:
     osm_data.append({"Component": f"K⁺ ({tot_K/vol_L:.1f} mmol/L × 1)",
                      "mOsm/L": round(osm_K, 1), "Note": "cation"})
-if tot_Mg > 0:
-    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg/vol_L:.1f} mmol/L × 2)",
-                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent"})
+if tot_Mg_meq > 0:
+    osm_data.append({"Component": f"Mg²⁺ ({tot_Mg_meq/vol_L:.1f} mEq/L)",
+                     "mOsm/L": round(osm_Mg, 1), "Note": "cation, divalent (as mEq)"})
 osm_data.append({"Component": "Cation sum per litre",
                  "mOsm/L": round(cation_sum_per_L, 1), "Note": "before ×2"})
 osm_data.append({"Component": "Cation sum × 2  (with counter-ions)",
@@ -574,7 +584,7 @@ if k_vol > 0:
     recipe.append({"Component": k_label, "Volume (mL)": round(k_vol, 1),
                    "Details": f"K⁺ {k_kcl_needed:.1f} mmol + Cl⁻ {k_cl_contribution:.1f} mmol"})
 if mg_vol > 0:
-    recipe.append({"Component": "MgSO₄ 8mEq/10mL", "Volume (mL)": round(mg_vol, 1),
+    recipe.append({"Component": "MgSO₄ 8.1 mEq/10 mL", "Volume (mL)": round(mg_vol, 1),
                    "Details": f"{mg_vials:.1f} vials × 10 mL | Mg²⁺ {mg_needed_meq:.1f} mEq ({mg_needed:.2f} mmol)"})
 if phos_vol > 0:
     p_label = "K Phosphate B.Braun" if "K Phosphate" in phos_src else "Na Phosphate Braun"
