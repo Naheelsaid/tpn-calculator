@@ -279,7 +279,6 @@ with st.expander("🟨 Potassium — K⁺", expanded=True):
         )
 
 # ── MAGNESIUM ─────────────────────────────────────────────────────────────────
-# MgSO₄: 8.1 mEq / 10 mL = 0.81 mEq/mL = 0.405 mmol/mL
 MG_MEQ_PER_ML  = 0.81
 MG_MMOL_PER_ML = 0.405
 MG_VIAL_ML     = 10
@@ -429,8 +428,8 @@ final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams >
 tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
 tot_Phos_from_na = na_from_phos * 0.6
 tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
-tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)   # mmol
-tot_Mg_meq       = tot_Mg * 2                                     # mEq for display & osmolarity
+tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)
+tot_Mg_meq       = tot_Mg * 2
 tot_Phos         = aa_Phos + (phos_needed if phos_target > 0 else 0) + tot_Phos_from_na
 tot_Cl           = aa_Cl
 if na_target > 0:
@@ -442,19 +441,24 @@ tot_Ace  = aa_Ace
 tot_Na  += extra_nacl3 * 0.51335
 
 # ── OSMOLARITY ────────────────────────────────────────────────────────────────
+# Diluent volume = total vol minus all concentrated additive volumes
+# (electrolyte solutions + trace elements + multivitamin)
+# Solutes are dissolved into dextrose vol + AA vol + WFI vol only
+additive_vol  = na_vol + k_vol + mg_vol + phos_vol + extra_nacl3 + trace_vol + mv_vol
+diluent_vol   = max(total_vol - additive_vol, 1.0)   # mL, safety floor of 1
+diluent_vol_L = diluent_vol / 1000
+
 # Formula:
 #   (dextrose g/L × 5)
 # + (AA g/L × 10)
-# + (Na salt mEq/L × 2)   — NaCl, acetate, phosphate all grouped under Na
-# + (K salt mEq/L × 2)    — KCl, acetate, phosphate all grouped under K
-# + (Mg sulfate mEq/L × 1) — SO₄²⁻ is divalent so factor is 1 per mEq
-vol_L = total_vol / 1000 if total_vol > 0 else 1
-
-osm_dex = (dex_grams / vol_L) * 5          # non-ionic
-osm_aa  = (aa_grams  / vol_L) * 10         # non-ionic
-osm_Na  = (tot_Na    / vol_L) * 2          # Na salt (Cl/acetate/phosphate) × 2 mOsm/mEq
-osm_K   = (tot_K     / vol_L) * 2          # K salt (Cl/acetate/phosphate) × 2 mOsm/mEq
-osm_Mg  = (tot_Mg_meq / vol_L) * 1         # MgSO₄ × 1 mOsm/mEq (SO₄²⁻ divalent)
+# + (Na salt mEq/L × 2)   — NaCl / acetate / phosphate
+# + (K  salt mEq/L × 2)   — KCl  / acetate / phosphate
+# + (Mg sulfate mEq/L × 1) — SO₄²⁻ divalent → factor 1 per mEq
+osm_dex = (dex_grams / diluent_vol_L) * 5
+osm_aa  = (aa_grams  / diluent_vol_L) * 10
+osm_Na  = (tot_Na    / diluent_vol_L) * 2
+osm_K   = (tot_K     / diluent_vol_L) * 2
+osm_Mg  = (tot_Mg_meq / diluent_vol_L) * 1
 
 osmolarity = round(osm_dex + osm_aa + osm_Na + osm_K + osm_Mg)
 
@@ -529,31 +533,32 @@ st.markdown("---")
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 📐 Osmolarity Breakdown")
 st.markdown(
-    '<div class="info-box">'
-    '<b>Formula:</b> (dextrose g/L × 5) + (AA g/L × 10) + (Na salt mEq/L × 2) + (K salt mEq/L × 2) + (Mg sulfate mEq/L × 1)<br>'
-    'Na and K grouped by cation regardless of paired anion (Cl⁻, acetate, phosphate) · MgSO₄ × 1 because SO₄²⁻ is divalent'
-    '</div>',
+    f'<div class="info-box">'
+    f'<b>Formula:</b> (dextrose g/L × 5) + (AA g/L × 10) + (Na salt mEq/L × 2) + (K salt mEq/L × 2) + (Mg sulfate mEq/L × 1)<br>'
+    f'<b>Diluent volume:</b> {total_vol:.0f} mL total − {additive_vol:.0f} mL additives = <b>{diluent_vol:.0f} mL</b> '
+    f'(dextrose + AA + WFI only — electrolytes, trace elements and multivitamin excluded)'
+    f'</div>',
     unsafe_allow_html=True
 )
 
 import pandas as pd
 osm_data = []
 if dex_grams > 0:
-    osm_data.append({"Component": f"Dextrose ({dex_grams/vol_L:.1f} g/L × 5)",
+    osm_data.append({"Component": f"Dextrose ({dex_grams/diluent_vol_L:.1f} g/L × 5)",
                      "mOsm/L": round(osm_dex, 1), "Note": "non-ionic"})
 if aa_grams > 0:
-    osm_data.append({"Component": f"Amino Acids ({aa_grams/vol_L:.1f} g/L × 10)",
+    osm_data.append({"Component": f"Amino Acids ({aa_grams/diluent_vol_L:.1f} g/L × 10)",
                      "mOsm/L": round(osm_aa, 1), "Note": "non-ionic"})
 if tot_Na > 0:
-    osm_data.append({"Component": f"Na salt ({tot_Na/vol_L:.1f} mEq/L × 2)",
+    osm_data.append({"Component": f"Na salt ({tot_Na/diluent_vol_L:.1f} mEq/L × 2)",
                      "mOsm/L": round(osm_Na, 1), "Note": "NaCl / acetate / phosphate"})
 if tot_K > 0:
-    osm_data.append({"Component": f"K salt ({tot_K/vol_L:.1f} mEq/L × 2)",
+    osm_data.append({"Component": f"K salt ({tot_K/diluent_vol_L:.1f} mEq/L × 2)",
                      "mOsm/L": round(osm_K, 1), "Note": "KCl / acetate / phosphate"})
 if tot_Mg_meq > 0:
-    osm_data.append({"Component": f"Mg sulfate ({tot_Mg_meq/vol_L:.1f} mEq/L × 1)",
+    osm_data.append({"Component": f"Mg sulfate ({tot_Mg_meq/diluent_vol_L:.1f} mEq/L × 1)",
                      "mOsm/L": round(osm_Mg, 1), "Note": "MgSO₄ — SO₄²⁻ divalent"})
-osm_data.append({"Component": f"TOTAL  ({total_vol:.0f} mL)",
+osm_data.append({"Component": f"TOTAL  (diluent vol {diluent_vol:.0f} mL)",
                  "mOsm/L": osmolarity, "Note": ""})
 
 df_osm = pd.DataFrame(osm_data)
@@ -592,9 +597,11 @@ if extra_nacl3 > 0:
     recipe.append({"Component": "NaCl 3% (extra)", "Volume (mL)": round(extra_nacl3, 1),
                    "Details": f"Na⁺ {extra_nacl3*0.51335:.1f} mmol · Cl⁻ {extra_nacl3*0.51335:.1f} mmol"})
 if trace_vol > 0:
-    recipe.append({"Component": "Trace Elements", "Volume (mL)": round(trace_vol, 1), "Details": "Fixed additive — volume only"})
+    recipe.append({"Component": "Trace Elements", "Volume (mL)": round(trace_vol, 1),
+                   "Details": "Fixed additive — excluded from diluent volume in osmolarity"})
 if mv_vol > 0:
-    recipe.append({"Component": "Multivitamin", "Volume (mL)": round(mv_vol, 1), "Details": "Fixed additive — volume only"})
+    recipe.append({"Component": "Multivitamin", "Volume (mL)": round(mv_vol, 1),
+                   "Details": "Fixed additive — excluded from diluent volume in osmolarity"})
 if wfi_vol > 0:
     recipe.append({"Component": "Water for Injection", "Volume (mL)": round(wfi_vol, 1), "Details": "Diluent — 0 mOsm"})
 
