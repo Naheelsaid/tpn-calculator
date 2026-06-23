@@ -382,7 +382,21 @@ st.markdown("---")
 #  ADDITIONAL NaCl 3%
 # ══════════════════════════════════════════════════════════════════════════════
 with st.expander("🧂 Additional NaCl 3% (optional)"):
+    st.markdown('<div class="info-box"><b>Extra NaCl 3%:</b> Optional additional sodium chloride for extra sodium/fluid. Osmolarity: 1.0267 mOsm/mL</div>', unsafe_allow_html=True)
+    
     extra_nacl3 = st.number_input("Extra NaCl 3% volume (mL)", min_value=0.0, value=0.0, step=10.0)
+    extra_nacl3_na = extra_nacl3 * 0.51335 if extra_nacl3 > 0 else 0.0
+    
+    if extra_nacl3 > 0:
+        st.metric("→ Na⁺ provided", f"{extra_nacl3_na:.1f} mmol")
+    
+    if sa_target > 0:
+        st.markdown(
+            f'<div class="info-box">ℹ️ <b>Sodium Acetate reduces sodium needed from all NaCl sources</b> '
+            f'(Regular NaCl 3% AND Additional NaCl 3%). '
+            f'Sodium from acetate: <b>{sa_target:.1f} mmol</b></div>',
+            unsafe_allow_html=True
+        )
 
 st.markdown("---")
 
