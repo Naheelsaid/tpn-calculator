@@ -341,6 +341,24 @@ with st.expander("🟦 Phosphate — PO₄³⁻", expanded=True):
 
 st.markdown("---")
 
+# ── SODIUM ACETATE ────────────────────────────────────────────────────────────
+with st.expander("🧂 Sodium Acetate", expanded=False):
+    st.markdown('<div class="info-box"><b>Sodium Acetate:</b> 2 mEq/mL (provides Na⁺ and acetate). Osmolarity: 4 mOsm/mL</div>', unsafe_allow_html=True)
+    saa1, saa2, saa3 = st.columns(3)
+    sa_target = saa1.number_input("Target Sodium Acetate (mEq/day)", min_value=0.0, value=0.0, step=5.0)
+    sa_vol = saa2.number_input("Volume (mL)", min_value=0.0, value=0.0, step=1.0) if sa_target == 0 else (sa_target / 2.0)
+    sa_meq = sa_vol * 2.0 if sa_vol > 0 else sa_target
+    saa3.metric("→ mEq provided", f"{sa_meq:.1f}" if sa_vol > 0 else f"{sa_target:.1f}")
+    
+    if sa_vol > 0:
+        st.markdown(
+            f'<span class="result-pill">Na⁺ from Acetate: <b>{sa_meq:.1f} mEq</b></span>'
+            f'<span class="result-pill">Acetate: <b>{sa_meq:.1f} mEq</b></span>',
+            unsafe_allow_html=True
+        )
+
+st.markdown("---")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  ADDITIONAL NaCl 3%
@@ -405,7 +423,7 @@ st.markdown("---")
 #  WFI
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 💧 Water for Injection / Diluent")
-used_so_far = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + extra_nacl3 + trace_vol + mv_vol
+used_so_far = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + extra_nacl3 + trace_vol + mv_vol
 auto_wfi    = max(0.0, goal_vol - used_so_far)
 wa1, wa2 = st.columns([2, 1])
 wfi_vol = wa1.number_input("WFI Volume (mL)", min_value=0.0, value=0.0, step=10.0)
@@ -417,7 +435,7 @@ st.markdown("---")
 # ══════════════════════════════════════════════════════════════════════════════
 #  CALCULATIONS
 # ══════════════════════════════════════════════════════════════════════════════
-total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + extra_nacl3 + trace_vol + mv_vol + wfi_vol
+total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + extra_nacl3 + trace_vol + mv_vol + wfi_vol
 total_kcal = dex_kcal + aa_kcal
 total_kcal_with_lipid = total_kcal + lipid_kcal
 
@@ -425,7 +443,7 @@ total_kcal_with_lipid = total_kcal + lipid_kcal
 final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams > 0) else 0.0
 
 # ── Electrolyte totals ────────────────────────────────────────────────────────
-tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos
+tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos + (sa_meq if sa_vol > 0 else 0)
 tot_Phos_from_na = na_from_phos * 0.6
 tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)
@@ -437,26 +455,52 @@ if na_target > 0:
 if k_target > 0 and "KCl" in k_src:
     tot_Cl += k_cl_contribution
 tot_Cl  += extra_nacl3 * 0.51335
-tot_Ace  = aa_Ace
+tot_Ace  = aa_Ace + (sa_meq if sa_vol > 0 else 0)
 tot_Na  += extra_nacl3 * 0.51335
 
 # ── OSMOLARITY ────────────────────────────────────────────────────────────────
-# Calculate osmolarity based on TOTAL TPN volume (final bag volume)
-total_vol_L = max(total_vol / 1000, 0.001)  # Convert to liters, safety floor
+# Component-specific osmolarity values (mOsm/mL)
+OSM_AA = 1.021  # Amino acids 10%
+OSM_DEX_25 = 1.39  # Dextrose 25%
+OSM_DEX_50 = 2.525  # Dextrose 50%
+OSM_NACL_3 = 1.0267  # NaCl 3%
+OSM_KCL_1_1 = 2.0  # KCl 1:1
+OSM_KCL_2_1 = 4.0  # KCl 2:1
+OSM_MG = 4.06  # MgSO₄
+OSM_NA_PHOS = 7.0  # Na Phosphate
+OSM_K_PHOS = 7.0  # K Phosphate (assuming same as Na Phosphate)
+OSM_NA_ACETATE = 4.0  # Sodium Acetate
+OSM_LIPID = 0.38  # Lipid 20%
 
-# Formula:
-#   (dextrose g/L × 5)
-# + (AA g/L × 10)
-# + (Na mEq/L)
-# + (K mEq/L)
-# + (Mg sulfate mEq/L × 1) — SO₄²⁻ divalent → factor 1 per mEq
-osm_dex = (dex_grams / total_vol_L) * 5 if total_vol > 0 else 0
-osm_aa  = (aa_grams  / total_vol_L) * 10 if total_vol > 0 else 0
-osm_Na  = (tot_Na    / total_vol_L) if total_vol > 0 else 0
-osm_K   = (tot_K     / total_vol_L) if total_vol > 0 else 0
-osm_Mg  = (tot_Mg_meq / total_vol_L) * 1 if total_vol > 0 else 0
+# Determine dextrose osmolarity based on concentration
+if dex_conc == 25:
+    osm_dex_per_ml = OSM_DEX_25
+elif dex_conc == 50:
+    osm_dex_per_ml = OSM_DEX_50
+else:
+    # Linear interpolation for other concentrations
+    osm_dex_per_ml = (dex_conc / 25) * OSM_DEX_25 if dex_conc < 25 else ((dex_conc - 25) / 25 * (OSM_DEX_50 - OSM_DEX_25) + OSM_DEX_25)
 
-osmolarity = round(osm_dex + osm_aa + osm_Na + osm_K + osm_Mg)
+# Determine phosphate osmolarity based on source
+osm_phos_per_ml = OSM_NA_PHOS if "Na Phosphate" in phos_src else OSM_K_PHOS
+
+# Calculate osmolarity contributions (mOsm)
+osm_dex_total = dex_vol * osm_dex_per_ml if dex_vol > 0 else 0
+osm_aa_total = aa_vol * OSM_AA if aa_vol > 0 else 0
+osm_nacl_total = na_vol * OSM_NACL_3 if na_vol > 0 else 0
+osm_kcl_total = k_vol * (OSM_KCL_2_1 if "2:1" in k_src else OSM_KCL_1_1) if k_vol > 0 else 0
+osm_mg_total = mg_vol * OSM_MG if mg_vol > 0 else 0
+osm_phos_total = phos_vol * osm_phos_per_ml if phos_vol > 0 else 0
+osm_sa_total = sa_vol * OSM_NA_ACETATE if sa_vol > 0 else 0
+osm_extra_nacl_total = extra_nacl3 * OSM_NACL_3 if extra_nacl3 > 0 else 0
+osm_trace_total = 0  # Trace elements typically minimal osmolarity
+osm_mv_total = 0  # Multivitamin typically minimal osmolarity
+
+# Total osmolarity contribution (mOsm)
+total_osm = osm_dex_total + osm_aa_total + osm_nacl_total + osm_kcl_total + osm_mg_total + osm_phos_total + osm_sa_total + osm_extra_nacl_total + osm_trace_total + osm_mv_total
+
+# Final osmolarity (mOsm/L) = total mOsm / total volume in L
+osmolarity = round(total_osm / (total_vol / 1000)) if total_vol > 0 else 0
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -530,32 +574,45 @@ st.markdown("---")
 st.markdown("### 📐 Osmolarity Breakdown")
 st.markdown(
     f'<div class="info-box">'
-    f'<b>Formula:</b> (dextrose g/L × 5) + (AA g/L × 10) + (Na mEq/L) + (K mEq/L) + (Mg mEq/L × 1)<br>'
-    f'<b>Total TPN volume:</b> <b>{total_vol:.0f} mL</b> (all components including electrolytes and additives)<br>'
-    f'<b>Osmolarity calculation uses the full TPN volume.</b>'
+    f'<b>Method:</b> Component osmolarity values (mOsm/mL) × volume (mL)<br>'
+    f'<b>Components:</b> AA 1.021 | Dex 25% 1.39 | Dex 50% 2.525 | NaCl 3% 1.0267 | KCl 2:1 4.0 | KCl 1:1 2.0 | Mg 4.06 | Na Phos 7.0 | Na Acetate 4.0 mOsm/mL<br>'
+    f'<b>Total TPN volume:</b> <b>{total_vol:.0f} mL</b>'
     f'</div>',
     unsafe_allow_html=True
 )
 
 import pandas as pd
 osm_data = []
-if dex_grams > 0:
-    osm_data.append({"Component": f"Dextrose ({dex_grams/total_vol_L:.1f} g/L × 5)",
-                     "mOsm/L": round(osm_dex, 1), "Note": "non-ionic"})
-if aa_grams > 0:
-    osm_data.append({"Component": f"Amino Acids ({aa_grams/total_vol_L:.1f} g/L × 10)",
-                     "mOsm/L": round(osm_aa, 1), "Note": "non-ionic"})
-if tot_Na > 0:
-    osm_data.append({"Component": f"Na salts ({tot_Na/total_vol_L:.1f} mEq/L)",
-                     "mOsm/L": round(osm_Na, 1), "Note": "NaCl / acetate / phosphate"})
-if tot_K > 0:
-    osm_data.append({"Component": f"K salts ({tot_K/total_vol_L:.1f} mEq/L)",
-                     "mOsm/L": round(osm_K, 1), "Note": "KCl / acetate / phosphate"})
-if tot_Mg_meq > 0:
-    osm_data.append({"Component": f"Mg sulfate ({tot_Mg_meq/total_vol_L:.1f} mEq/L × 1)",
-                     "mOsm/L": round(osm_Mg, 1), "Note": "MgSO₄ — SO₄²⁻ divalent"})
-osm_data.append({"Component": f"TOTAL (TPN volume {total_vol:.0f} mL)",
-                 "mOsm/L": osmolarity, "Note": ""})
+if osm_dex_total > 0:
+    osm_data.append({"Component": f"Dextrose {dex_conc:.0f}%", "Volume (mL)": round(dex_vol, 1),
+                     "mOsm/mL": osm_dex_per_ml, "Total mOsm": round(osm_dex_total, 1)})
+if osm_aa_total > 0:
+    osm_data.append({"Component": "Amino Acids 10%", "Volume (mL)": round(aa_vol, 1),
+                     "mOsm/mL": OSM_AA, "Total mOsm": round(osm_aa_total, 1)})
+if osm_nacl_total > 0:
+    osm_data.append({"Component": "NaCl 3%", "Volume (mL)": round(na_vol, 1),
+                     "mOsm/mL": OSM_NACL_3, "Total mOsm": round(osm_nacl_total, 1)})
+if osm_kcl_total > 0:
+    kcl_label = "KCl 2:1" if "2:1" in k_src else "KCl 1:1"
+    kcl_osm = OSM_KCL_2_1 if "2:1" in k_src else OSM_KCL_1_1
+    osm_data.append({"Component": kcl_label, "Volume (mL)": round(k_vol, 1),
+                     "mOsm/mL": kcl_osm, "Total mOsm": round(osm_kcl_total, 1)})
+if osm_mg_total > 0:
+    osm_data.append({"Component": "MgSO₄", "Volume (mL)": round(mg_vol, 1),
+                     "mOsm/mL": OSM_MG, "Total mOsm": round(osm_mg_total, 1)})
+if osm_phos_total > 0:
+    phos_label = "Na Phosphate" if "Na Phosphate" in phos_src else "K Phosphate"
+    osm_data.append({"Component": phos_label, "Volume (mL)": round(phos_vol, 1),
+                     "mOsm/mL": osm_phos_per_ml, "Total mOsm": round(osm_phos_total, 1)})
+if osm_sa_total > 0:
+    osm_data.append({"Component": "Sodium Acetate", "Volume (mL)": round(sa_vol, 1),
+                     "mOsm/mL": OSM_NA_ACETATE, "Total mOsm": round(osm_sa_total, 1)})
+if osm_extra_nacl_total > 0:
+    osm_data.append({"Component": "NaCl 3% (extra)", "Volume (mL)": round(extra_nacl3, 1),
+                     "mOsm/mL": OSM_NACL_3, "Total mOsm": round(osm_extra_nacl_total, 1)})
+
+osm_data.append({"Component": "TOTAL", "Volume (mL)": round(total_vol, 1),
+                 "mOsm/mL": f"{osmolarity/1000:.3f}", "Total mOsm": round(total_osm, 1)})
 
 df_osm = pd.DataFrame(osm_data)
 st.dataframe(df_osm, use_container_width=True, hide_index=True)
@@ -589,6 +646,9 @@ if phos_vol > 0:
     p_label = "K Phosphate B.Braun" if "K Phosphate" in phos_src else "Na Phosphate Braun"
     recipe.append({"Component": p_label, "Volume (mL)": round(phos_vol, 1),
                    "Details": f"PO₄³⁻ {phos_needed:.1f} mmol + {'K⁺' if 'K Phosphate' in phos_src else 'Na⁺'} {phos_vol:.1f} mmol"})
+if sa_vol > 0:
+    recipe.append({"Component": "Sodium Acetate 2 mEq/mL", "Volume (mL)": round(sa_vol, 1),
+                   "Details": f"Na⁺ {sa_meq:.1f} mEq + Acetate {sa_meq:.1f} mEq"})
 if extra_nacl3 > 0:
     recipe.append({"Component": "NaCl 3% (extra)", "Volume (mL)": round(extra_nacl3, 1),
                    "Details": f"Na⁺ {extra_nacl3*0.51335:.1f} mmol · Cl⁻ {extra_nacl3*0.51335:.1f} mmol"})
