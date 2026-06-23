@@ -729,4 +729,4 @@ if warnings:
         st.markdown(f'<div class="warn-box">{w}</div>', unsafe_allow_html=True)
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.caption("⚗️ TPN Compounding Calculator — For clinical use by trained pharmacy")
+st.caption("⚗️ TPN Compounding Calculator")
