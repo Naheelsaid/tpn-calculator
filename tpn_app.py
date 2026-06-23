@@ -220,6 +220,23 @@ na_from_phos = _phos_vol_pre if (_phos_target_pre > 0 and "Na Phosphate" in _pho
 sa_target = 0.0
 sa_vol = 0.0
 
+# ── SODIUM ACETATE ────────────────────────────────────────────────────────────
+with st.expander("🧂 Sodium Acetate", expanded=False):
+    st.markdown('<div class="info-box"><b>Sodium Acetate:</b> 2 mEq/mL (provides Na⁺ and acetate). Osmolarity: 4 mOsm/mL</div>', unsafe_allow_html=True)
+    saa1, saa2, saa3 = st.columns(3)
+    sa_target = saa1.number_input("Target Sodium Acetate (mEq/day)", min_value=0.0, value=0.0, step=5.0)
+    sa_vol = (sa_target / 2.0) if sa_target > 0 else 0.0
+    saa2.metric("→ Volume (mL)", f"{sa_vol:.1f}" if sa_target > 0 else "—")
+    
+    if sa_target > 0:
+        st.markdown(
+            f'<span class="result-pill">Na⁺ from Acetate: <b>{sa_target:.1f} mEq</b></span>'
+            f'<span class="result-pill">Acetate: <b>{sa_target:.1f} mEq</b></span>',
+            unsafe_allow_html=True
+        )
+
+st.markdown("---")
+
 # ── SODIUM ────────────────────────────────────────────────────────────────────
 with st.expander("🧂 Sodium — Na⁺", expanded=True):
     ns1, ns2, ns3, ns4 = st.columns(4)
@@ -355,23 +372,6 @@ with st.expander("🟦 Phosphate — PO₄³⁻", expanded=True):
         st.markdown(
             f'<div class="info-box">✅ Na Phosphate delivers <b>{na_from_phos:.1f} mmol Na⁺</b> '
             f'(= {phos_vol:.1f} mL × 1 mmol/mL). Credited in the Na⁺ section — NaCl 3% reduced accordingly.</div>',
-            unsafe_allow_html=True
-        )
-
-st.markdown("---")
-
-# ── SODIUM ACETATE ────────────────────────────────────────────────────────────
-with st.expander("🧂 Sodium Acetate", expanded=False):
-    st.markdown('<div class="info-box"><b>Sodium Acetate:</b> 2 mEq/mL (provides Na⁺ and acetate). Osmolarity: 4 mOsm/mL</div>', unsafe_allow_html=True)
-    saa1, saa2, saa3 = st.columns(3)
-    sa_target = saa1.number_input("Target Sodium Acetate (mEq/day)", min_value=0.0, value=0.0, step=5.0)
-    sa_vol = (sa_target / 2.0) if sa_target > 0 else 0.0
-    saa2.metric("→ Volume (mL)", f"{sa_vol:.1f}" if sa_target > 0 else "—")
-    
-    if sa_target > 0:
-        st.markdown(
-            f'<span class="result-pill">Na⁺ from Acetate: <b>{sa_target:.1f} mEq</b></span>'
-            f'<span class="result-pill">Acetate: <b>{sa_target:.1f} mEq</b></span>',
             unsafe_allow_html=True
         )
 
