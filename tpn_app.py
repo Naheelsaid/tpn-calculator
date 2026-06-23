@@ -216,6 +216,10 @@ _phos_vol_pre    = _phos_needed_pre / 0.6 if _phos_target_pre > 0 else 0.0
 k_from_phos  = _phos_vol_pre if (_phos_target_pre > 0 and "K Phosphate" in _phos_src_pre) else 0.0
 na_from_phos = _phos_vol_pre if (_phos_target_pre > 0 and "Na Phosphate" in _phos_src_pre) else 0.0
 
+# Initialize sodium acetate target (will be set in Sodium Acetate section)
+sa_target = 0.0
+sa_vol = 0.0
+
 # ── SODIUM ────────────────────────────────────────────────────────────────────
 with st.expander("🧂 Sodium — Na⁺", expanded=True):
     ns1, ns2, ns3, ns4 = st.columns(4)
