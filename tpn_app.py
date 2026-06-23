@@ -346,14 +346,13 @@ with st.expander("🧂 Sodium Acetate", expanded=False):
     st.markdown('<div class="info-box"><b>Sodium Acetate:</b> 2 mEq/mL (provides Na⁺ and acetate). Osmolarity: 4 mOsm/mL</div>', unsafe_allow_html=True)
     saa1, saa2, saa3 = st.columns(3)
     sa_target = saa1.number_input("Target Sodium Acetate (mEq/day)", min_value=0.0, value=0.0, step=5.0)
-    sa_vol = saa2.number_input("Volume (mL)", min_value=0.0, value=0.0, step=1.0) if sa_target == 0 else (sa_target / 2.0)
-    sa_meq = sa_vol * 2.0 if sa_vol > 0 else sa_target
-    saa3.metric("→ mEq provided", f"{sa_meq:.1f}" if sa_vol > 0 else f"{sa_target:.1f}")
+    sa_vol = (sa_target / 2.0) if sa_target > 0 else 0.0
+    saa2.metric("→ Volume (mL)", f"{sa_vol:.1f}" if sa_target > 0 else "—")
     
-    if sa_vol > 0:
+    if sa_target > 0:
         st.markdown(
-            f'<span class="result-pill">Na⁺ from Acetate: <b>{sa_meq:.1f} mEq</b></span>'
-            f'<span class="result-pill">Acetate: <b>{sa_meq:.1f} mEq</b></span>',
+            f'<span class="result-pill">Na⁺ from Acetate: <b>{sa_target:.1f} mEq</b></span>'
+            f'<span class="result-pill">Acetate: <b>{sa_target:.1f} mEq</b></span>',
             unsafe_allow_html=True
         )
 
@@ -443,7 +442,7 @@ total_kcal_with_lipid = total_kcal + lipid_kcal
 final_dex_conc = (dex_grams / total_vol * 100) if (total_vol > 0 and dex_grams > 0) else 0.0
 
 # ── Electrolyte totals ────────────────────────────────────────────────────────
-tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos + (sa_meq if sa_vol > 0 else 0)
+tot_Na           = aa_Na + (na_nacl_needed if na_target > 0 else 0) + na_from_phos + (sa_target if sa_target > 0 else 0)
 tot_Phos_from_na = na_from_phos * 0.6
 tot_K            = aa_K + (k_kcl_needed if k_target > 0 else 0) + k_from_phos
 tot_Mg           = aa_Mg + (mg_needed if mg_target > 0 else 0)
@@ -455,7 +454,7 @@ if na_target > 0:
 if k_target > 0 and "KCl" in k_src:
     tot_Cl += k_cl_contribution
 tot_Cl  += extra_nacl3 * 0.51335
-tot_Ace  = aa_Ace + (sa_meq if sa_vol > 0 else 0)
+tot_Ace  = aa_Ace + (sa_target if sa_target > 0 else 0)
 tot_Na  += extra_nacl3 * 0.51335
 
 # ── OSMOLARITY ────────────────────────────────────────────────────────────────
@@ -648,7 +647,7 @@ if phos_vol > 0:
                    "Details": f"PO₄³⁻ {phos_needed:.1f} mmol + {'K⁺' if 'K Phosphate' in phos_src else 'Na⁺'} {phos_vol:.1f} mmol"})
 if sa_vol > 0:
     recipe.append({"Component": "Sodium Acetate 2 mEq/mL", "Volume (mL)": round(sa_vol, 1),
-                   "Details": f"Na⁺ {sa_meq:.1f} mEq + Acetate {sa_meq:.1f} mEq"})
+                   "Details": f"Na⁺ {sa_target:.1f} mEq + Acetate {sa_target:.1f} mEq"})
 if extra_nacl3 > 0:
     recipe.append({"Component": "NaCl 3% (extra)", "Volume (mL)": round(extra_nacl3, 1),
                    "Details": f"Na⁺ {extra_nacl3*0.51335:.1f} mmol · Cl⁻ {extra_nacl3*0.51335:.1f} mmol"})
