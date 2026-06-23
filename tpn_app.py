@@ -225,7 +225,9 @@ with st.expander("🧂 Sodium — Na⁺", expanded=True):
     ns3.metric("Still needed after AA (mmol)", f"{na_needed:.1f}" if na_target > 0 else "—")
     na_src = ns4.selectbox("Source", ["NaCl 3% (0.513 mmol/mL)"])
 
-    na_nacl_needed = max(0.0, na_needed - na_from_phos) if na_target > 0 else 0.0
+    # Calculate sodium needed after accounting for phosphate and acetate
+    na_from_acetate = sa_target if sa_target > 0 else 0.0
+    na_nacl_needed = max(0.0, na_needed - na_from_phos - na_from_acetate) if na_target > 0 else 0.0
 
     if na_from_phos > 0 and na_target > 0:
         st.markdown(
@@ -236,6 +238,19 @@ with st.expander("🧂 Sodium — Na⁺", expanded=True):
     elif na_from_phos > 0 and na_target == 0:
         st.markdown(
             f'<div class="info-box">ℹ️ Na Phosphate (PO₄ section) will deliver <b>{na_from_phos:.1f} mmol Na⁺</b>. '
+            f'Set a Na⁺ target above to see the full breakdown.</div>',
+            unsafe_allow_html=True
+        )
+
+    if na_from_acetate > 0 and na_target > 0:
+        st.markdown(
+            f'<div class="info-box">ℹ️ <b>Sodium Acetate (Acetate section) co-delivers {na_from_acetate:.1f} mmol Na⁺</b> '
+            f'→ NaCl 3% still needed: <b>{na_nacl_needed:.1f} mmol</b></div>',
+            unsafe_allow_html=True
+        )
+    elif na_from_acetate > 0 and na_target == 0:
+        st.markdown(
+            f'<div class="info-box">ℹ️ Sodium Acetate (Acetate section) will deliver <b>{na_from_acetate:.1f} mmol Na⁺</b>. '
             f'Set a Na⁺ target above to see the full breakdown.</div>',
             unsafe_allow_html=True
         )
