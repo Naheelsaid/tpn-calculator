@@ -379,29 +379,6 @@ st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  ADDITIONAL NaCl 3%
-# ══════════════════════════════════════════════════════════════════════════════
-with st.expander("🧂 Additional NaCl 3% (optional)"):
-    st.markdown('<div class="info-box"><b>Extra NaCl 3%:</b> Optional additional sodium chloride for extra sodium/fluid. Osmolarity: 1.0267 mOsm/mL</div>', unsafe_allow_html=True)
-    
-    extra_nacl3 = st.number_input("Extra NaCl 3% volume (mL)", min_value=0.0, value=0.0, step=10.0)
-    extra_nacl3_na = extra_nacl3 * 0.51335 if extra_nacl3 > 0 else 0.0
-    
-    if extra_nacl3 > 0:
-        st.metric("→ Na⁺ provided", f"{extra_nacl3_na:.1f} mmol")
-    
-    if sa_target > 0:
-        st.markdown(
-            f'<div class="info-box">ℹ️ <b>Sodium Acetate reduces sodium needed from all NaCl sources</b> '
-            f'(Regular NaCl 3% AND Additional NaCl 3%). '
-            f'Sodium from acetate: <b>{sa_target:.1f} mmol</b></div>',
-            unsafe_allow_html=True
-        )
-
-st.markdown("---")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #  TRACE ELEMENTS & MULTIVITAMIN
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🧪 Additives")
@@ -455,7 +432,7 @@ st.markdown("---")
 #  WFI
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 💧 Water for Injection / Diluent")
-used_so_far = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + extra_nacl3 + trace_vol + mv_vol
+used_so_far = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + trace_vol + mv_vol
 auto_wfi    = max(0.0, goal_vol - used_so_far)
 wa1, wa2 = st.columns([2, 1])
 wfi_vol = wa1.number_input("WFI Volume (mL)", min_value=0.0, value=0.0, step=10.0)
@@ -467,7 +444,8 @@ st.markdown("---")
 # ══════════════════════════════════════════════════════════════════════════════
 #  CALCULATIONS
 # ══════════════════════════════════════════════════════════════════════════════
-total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + extra_nacl3 + trace_vol + mv_vol + wfi_vol
+extra_nacl3 = 0.0  # Initialize (removed from additional NaCl 3% section)
+total_vol  = dex_vol + aa_vol + na_vol + k_vol + mg_vol + phos_vol + sa_vol + trace_vol + mv_vol + wfi_vol
 total_kcal = dex_kcal + aa_kcal
 total_kcal_with_lipid = total_kcal + lipid_kcal
 
@@ -486,9 +464,7 @@ if na_target > 0:
     tot_Cl += na_nacl_needed
 if k_target > 0 and "KCl" in k_src:
     tot_Cl += k_cl_contribution
-tot_Cl  += extra_nacl3 * 0.51335
 tot_Ace  = aa_Ace + (sa_target if sa_target > 0 else 0)
-tot_Na  += extra_nacl3 * 0.51335
 
 # ── OSMOLARITY ────────────────────────────────────────────────────────────────
 # Component-specific osmolarity values (mOsm/mL)
